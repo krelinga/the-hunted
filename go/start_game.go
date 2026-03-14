@@ -78,13 +78,14 @@ func (g *Game) advanceFromNotStarted(form Form) ([]Event, error) {
 	var events []Event
 	g.kmdtName = string(startGameForm.KmdtName)
 	events = append(events, KmdtNamedEvent{KmdtName: g.kmdtName})
-	g.startingUBoatType = startGameForm.UBoatType.Options[startGameForm.UBoatType.Selected]
-	events = append(events, UBoatTypeSelectedEvent{UBoatType: g.startingUBoatType})
-	if firstPatrolDate, err := g.startingUBoatType.FirstPatrolDate(); err != nil {
+	uboatType := startGameForm.UBoatType.Options[startGameForm.UBoatType.Selected]
+	g.UBoat = NewUBoat(uboatType, string(startGameForm.UBoatID))
+	events = append(events, UBoatTypeSelectedEvent{UBoatType: uboatType})
+	if firstPatrolDate, err := uboatType.FirstPatrolDate(); err != nil {
 		panic(fmt.Sprintf("invalid starting u-boat type: %v", err))
 	} else {
 		g.startPatrolDate = firstPatrolDate
-		events = append(events, FirstPatrolDateSetEvent{FirstPatrolDate: g.startPatrolDate, UBoatType: g.startingUBoatType})
+		events = append(events, FirstPatrolDateSetEvent{FirstPatrolDate: g.startPatrolDate, UBoatType: uboatType})
 	}
 	rankD6 := g.Roller.RollD6()
 	var rankThreshold D6

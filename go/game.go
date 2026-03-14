@@ -8,11 +8,12 @@ import (
 type Game struct {
 	Roller Roller
 
+	UBoat UBoat
+
 	kmdtName          string
 	kmdtRank          Rank
 	crewQuality       CrewQuality
 	gameState         GameState
-	startingUBoatType UBoatType
 	startPatrolDate   PatrolDate
 }
 
