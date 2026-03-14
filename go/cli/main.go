@@ -13,19 +13,22 @@ func main() {
 	}
 	for !g.IsFinished() {
 		f := g.Form()
-		var events []thehunted.Event
 		var err error
 		switch f := f.(type) {
-		case thehunted.StartGameForm:
-			events, err = handleStartGame(f, &g)
+		case *thehunted.StartGameForm:
+			err = handleStartGame(f)
 		default:
 			log.Fatalf("unexpected form type: %T", f)
 		}
 		if err != nil {
-			log.Fatalf("error advancing game: %v", err)
+			log.Fatalf("form population error: %v", err)
 		}
-		for _, event := range events {
-			fmt.Printf("event: %s\n", event)
+		if events, err := g.Advance(f); err != nil {
+			log.Fatalf("error advancing game: %v", err)
+		} else {
+			for _, event := range events {
+				fmt.Printf("event: %s\n", event)
+			}
 		}
 	}
 }

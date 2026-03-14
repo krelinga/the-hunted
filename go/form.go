@@ -11,7 +11,7 @@ type Form interface {
 
 type baseForm struct {}
 
-func (_ baseForm) formIsAClosedType() {}
+func (_ *baseForm) formIsAClosedType() {}
 
 type TextFormField string
 

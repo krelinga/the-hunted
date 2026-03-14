@@ -9,7 +9,7 @@ type StartGameForm struct {
 	KmdtName TextFormField
 }
 
-func (f StartGameForm) Validate() error {
+func (f *StartGameForm) Validate() error {
 	if err := f.UBoatType.Validate(); err != nil {
 		return fmt.Errorf("%w: invalid u-boat type", err)
 	}
@@ -17,7 +17,7 @@ func (f StartGameForm) Validate() error {
 }
 
 func (g *Game) formForNotStarted() Form {
-	return StartGameForm{
+	return &StartGameForm{
 		UBoatType: SelectFormField[UBoatType]{
 			Options: []UBoatType{
 				UBoatTypeVIIB, UBoatTypeVIIC, UBoatTypeVIICFlak, UBoatTypeVIIC41, UBoatTypeVIID,
@@ -57,7 +57,7 @@ func (e FirstPatrolDateSetEvent) String() string {
 }
 
 func (g *Game) advanceFromNotStarted(form Form) ([]Event, error) {
-	startGameForm, ok := form.(StartGameForm)
+	startGameForm, ok := form.(*StartGameForm)
 	if !ok {
 		return nil, fmt.Errorf("%w: expected StartGameForm, got %T", ErrUnexpectedForm, form)
 	}
