@@ -8,6 +8,13 @@ import (
 
 type D6 int
 
+func (d D6) String() string {
+	if err := d.Validate(); err != nil {
+		return fmt.Sprintf("Invalid D6 (%d)", d)
+	}
+	return fmt.Sprintf("%d", d)
+}
+
 var ErrInvalidDie = errors.New("invalid die")
 
 func (d D6) Validate() error {
