@@ -8,11 +8,11 @@ import (
 
 type SelectLoadoutForm struct {
 	baseForm
-	Loadout SelectFormField[Loadout]
+	Overall SelectFormField[Loadout]
 }
 
 func (f *SelectLoadoutForm) Validate() error {
-	if err := f.Loadout.Validate(); err != nil {
+	if err := f.Overall.Validate(); err != nil {
 		return fmt.Errorf("%w: invalid loadout selection", err)
 	}
 	return nil
@@ -52,7 +52,7 @@ func (g *Game) formForSelectLoadout() Form {
 	options = append(options, extraA...)
 
 	return &SelectLoadoutForm{
-		Loadout: SelectFormField[Loadout]{
+		Overall: SelectFormField[Loadout]{
 			Options: options,
 		},
 	}
@@ -67,7 +67,7 @@ func (g *Game) advanceFromSelectLoadout(form Form) ([]Event, error) {
 		return nil, err
 	}
 	events := []Event{}
-	loadout := selectLoadoutForm.Loadout.Options[selectLoadoutForm.Loadout.Selected]
+	loadout := selectLoadoutForm.Overall.Options[selectLoadoutForm.Overall.Selected]
 	g.nextLoadout = loadout
 	events = append(events, LoadoutSelectedEvent{Loadout: loadout})
 	g.gameState = GameStateInPort
