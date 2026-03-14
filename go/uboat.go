@@ -2,6 +2,8 @@ package thehunted
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 )
 
 type UBoatType int
@@ -170,7 +172,20 @@ func (u UBoatType) HasDeckGun() bool {
 	return u.DeckGunAmmo() > 0
 }
 
-func (u UBoatType) DefaultLoadout(pd PatrolDate) map[Torpedo]int {
+type Loadout map[Torpedo]int
+
+func (l Loadout) String() string {
+	kinds := []Torpedo{TorpedoG7e, TorpedoG7a, TorpedoG7esZaunkonig, TorpedoG7esZaunkonigII, TorpedoG7eFalke}
+	var parts []string
+	for _, kind := range kinds {
+		if count, ok := l[kind]; ok && count > 0 {
+			parts = append(parts, fmt.Sprintf("%dx %s", count, kind))
+		}
+	}
+	return fmt.Sprintf("[%s]", strings.Join(parts, ", "))
+}
+
+func (u UBoatType) DefaultLoadout(pd PatrolDate) Loadout {
 	u.Must()
 	pd.Must()
 
@@ -186,35 +201,35 @@ func (u UBoatType) DefaultLoadout(pd PatrolDate) map[Torpedo]int {
 
 	switch u {
 	case UBoatTypeVIIB, UBoatTypeVIIC, UBoatTypeVIIC41, UBoatTypeVIID:
-		return map[Torpedo]int{
+		return Loadout{
 			TorpedoG7e: 8,
 			TorpedoG7a: 4,
 			special:    2,
 		}
 	case UBoatTypeVIICFlak:
-		return map[Torpedo]int{
+		return Loadout{
 			TorpedoG7a: 3,
 			special:    2,
 		}
 	case UBoatTypeIXB, UBoatTypeIXC, UBoatTypeIXC40, UBoatTypeIXD42:
-		return map[Torpedo]int{
+		return Loadout{
 			TorpedoG7e: 10,
 			TorpedoG7a: 10,
 			special:    2,
 		}
 	case UBoatTypeIXD2:
-		return map[Torpedo]int{
+		return Loadout{
 			TorpedoG7e: 10,
 			TorpedoG7a: 10,
 			special:    4,
 		}
 	case UBoatTypeXB:
-		return map[Torpedo]int{
+		return Loadout{
 			TorpedoG7e: 3,
 			special:    2,
 		}
 	case UBoatTypeXII:
-		return map[Torpedo]int{
+		return Loadout{
 			TorpedoG7e: 8,
 			TorpedoG7a: 8,
 			special:    4,
@@ -222,7 +237,7 @@ func (u UBoatType) DefaultLoadout(pd PatrolDate) map[Torpedo]int {
 	case UBoatTypeXIV:
 		return nil
 	case UBoatTypeXXI:
-		return map[Torpedo]int{
+		return Loadout{
 			TorpedoG7e: 8,
 			TorpedoG7a: 9,
 			special:    6,

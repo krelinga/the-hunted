@@ -17,6 +17,8 @@ func main() {
 		switch f := f.(type) {
 		case *thehunted.StartGameForm:
 			err = handleStartGame(f)
+		case *thehunted.SelectLoadoutForm:
+			err = handleSelectLoadout(f)
 		default:
 			log.Fatalf("unexpected form type: %T", f)
 		}

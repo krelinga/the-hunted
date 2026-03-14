@@ -79,7 +79,7 @@ func (e CrewQualitySetEvent) String() string {
 func (g *Game) advanceFromNotStarted(form Form) ([]Event, error) {
 	startGameForm, ok := form.(*StartGameForm)
 	if !ok {
-		return nil, fmt.Errorf("%w: expected StartGameForm, got %T", ErrUnexpectedForm, form)
+		return nil, fmt.Errorf("%w: expected *StartGameForm, got %T", ErrUnexpectedForm, form)
 	}
 	if err := startGameForm.Validate(); err != nil {
 		return nil, err
@@ -107,7 +107,7 @@ func (g *Game) advanceFromNotStarted(form Form) ([]Event, error) {
 	events = append(events, StartingRankSetEvent{D6: rankD6, Rank: g.kmdtRank, PatrolDate: g.startPatrolDate})
 	g.crewQuality = CrewQualityTrained
 	events = append(events, CrewQualitySetEvent{CrewQuality: g.crewQuality})
-	g.gameState = GameStateInPort
+	g.gameState = GameStateSelectLoadout
 	events = append(events, GameStateSetEvent{GameState: g.gameState})
 	return events, nil
 }
