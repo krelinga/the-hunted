@@ -5,38 +5,38 @@ import (
 	"fmt"
 )
 
-type Torpedo int
+type TorpType int
 
 const (
-	TorpedoG7a Torpedo = iota + 1
-	TorpedoG7e
-	TorpedoG7esZaunkonig
-	TorpedoG7esZaunkonigII
-	TorpedoG7eFalke
+	TorpTypeG7a TorpType = iota + 1
+	TorpTypeG7e
+	TorpTypeG7esZaunkonig
+	TorpTypeG7esZaunkonigII
+	TorpTypeG7eFalke
 )
 
-var ErrInvalidTorpedo = errors.New("invalid torpedo")
+var ErrInvalidTorpType = errors.New("invalid torp type")
 
-func (t Torpedo) Validate() error {
+func (t TorpType) Validate() error {
 	switch t {
-	case TorpedoG7a, TorpedoG7e, TorpedoG7esZaunkonig, TorpedoG7esZaunkonigII, TorpedoG7eFalke:
+	case TorpTypeG7a, TorpTypeG7e, TorpTypeG7esZaunkonig, TorpTypeG7esZaunkonigII, TorpTypeG7eFalke:
 		return nil
 	default:
-		return fmt.Errorf("%w: %d", ErrInvalidTorpedo, t)
+		return fmt.Errorf("%w: %d", ErrInvalidTorpType, t)
 	}
 }
 
-func (t Torpedo) String() string {
+func (t TorpType) String() string {
 	switch t {
-	case TorpedoG7a:
+	case TorpTypeG7a:
 		return "G7a Steam"
-	case TorpedoG7e:
+	case TorpTypeG7e:
 		return "G7e Electric"
-	case TorpedoG7esZaunkonig:
+	case TorpTypeG7esZaunkonig:
 		return "G7es Zaunkönig"
-	case TorpedoG7esZaunkonigII:
+	case TorpTypeG7esZaunkonigII:
 		return "G7es Zaunkönig II"
-	case TorpedoG7eFalke:
+	case TorpTypeG7eFalke:
 		return "G7e Falke"
 	default:
 		return fmt.Sprintf("Unknown torpedo (%d)", t)
