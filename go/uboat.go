@@ -2,7 +2,6 @@ package thehunted
 
 import (
 	"errors"
-	"fmt"
 )
 
 type UBoatType int
@@ -34,6 +33,12 @@ func (u UBoatType) Validate() error {
 		return nil
 	default:
 		return ErrInvalidUBoatType
+	}
+}
+
+func (u UBoatType) Must() {
+	if err := u.Validate(); err != nil {
+		panic(err)
 	}
 }
 
@@ -72,22 +77,20 @@ func (u UBoatType) String() string {
 	}
 }
 
-func (u UBoatType) FirstPatrolDate() (PatrolDate, error) {
-	if err := u.Validate(); err != nil {
-		return 0, err
-	}
+func (u UBoatType) FirstPatrolDate() PatrolDate {
+	u.Must()
 	switch u {
 	case UBoatTypeVIIB, UBoatTypeVIIC, UBoatTypeVIICFlak, UBoatTypeVIID, UBoatTypeIXB,
 		UBoatTypeIXC, UBoatTypeIXC40, UBoatTypeIXD2, UBoatTypeXB, UBoatTypeXII, UBoatTypeXIV:
-		return PatrolDateJul43, nil
+		return PatrolDateJul43
 	case UBoatTypeVIIC41:
-		return PatrolDateApr44, nil
+		return PatrolDateApr44
 	case UBoatTypeIXD42:
-		return PatrolDateMar45, nil
+		return PatrolDateMar45
 	case UBoatTypeXXI:
-		return PatrolDateFeb45, nil
+		return PatrolDateApr45
 	default:
-		panic(fmt.Sprintf("unhandled u-boat type %v", u))
+		panic("unreachable code")
 	}
 }
 
