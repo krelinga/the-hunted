@@ -172,10 +172,10 @@ func (u UBoatType) HasDeckGun() bool {
 	return u.DeckGunAmmo() > 0
 }
 
-type Loadout map[Torpedo]int
+type Loadout map[TorpType]int
 
 func (l Loadout) String() string {
-	kinds := []Torpedo{TorpedoG7e, TorpedoG7a, TorpedoG7esZaunkonig, TorpedoG7esZaunkonigII, TorpedoG7eFalke}
+	kinds := []TorpType{TorpTypeG7e, TorpTypeG7a, TorpTypeG7esZaunkonig, TorpTypeG7esZaunkonigII, TorpTypeG7eFalke}
 	var parts []string
 	for _, kind := range kinds {
 		if count, ok := l[kind]; ok && count > 0 {
@@ -189,57 +189,57 @@ func (u UBoatType) DefaultLoadout(pd PatrolDate) Loadout {
 	u.Must()
 	pd.Must()
 
-	var special Torpedo
+	var special TorpType
 	switch {
 	case pd < PatrolDateAug43:
-		special = TorpedoG7eFalke
+		special = TorpTypeG7eFalke
 	case pd < PatrolDateApr45:
-		special = TorpedoG7esZaunkonig
+		special = TorpTypeG7esZaunkonig
 	default:
-		special = TorpedoG7esZaunkonigII
+		special = TorpTypeG7esZaunkonigII
 	}
 
 	switch u {
 	case UBoatTypeVIIB, UBoatTypeVIIC, UBoatTypeVIIC41, UBoatTypeVIID:
 		return Loadout{
-			TorpedoG7e: 8,
-			TorpedoG7a: 4,
+			TorpTypeG7e: 8,
+			TorpTypeG7a: 4,
 			special:    2,
 		}
 	case UBoatTypeVIICFlak:
 		return Loadout{
-			TorpedoG7a: 3,
+			TorpTypeG7a: 3,
 			special:    2,
 		}
 	case UBoatTypeIXB, UBoatTypeIXC, UBoatTypeIXC40, UBoatTypeIXD42:
 		return Loadout{
-			TorpedoG7e: 10,
-			TorpedoG7a: 10,
+			TorpTypeG7e: 10,
+			TorpTypeG7a: 10,
 			special:    2,
 		}
 	case UBoatTypeIXD2:
 		return Loadout{
-			TorpedoG7e: 10,
-			TorpedoG7a: 10,
+			TorpTypeG7e: 10,
+			TorpTypeG7a: 10,
 			special:    4,
 		}
 	case UBoatTypeXB:
 		return Loadout{
-			TorpedoG7e: 3,
+			TorpTypeG7e: 3,
 			special:    2,
 		}
 	case UBoatTypeXII:
 		return Loadout{
-			TorpedoG7e: 8,
-			TorpedoG7a: 8,
+			TorpTypeG7e: 8,
+			TorpTypeG7a: 8,
 			special:    4,
 		}
 	case UBoatTypeXIV:
 		return nil
 	case UBoatTypeXXI:
 		return Loadout{
-			TorpedoG7e: 8,
-			TorpedoG7a: 9,
+			TorpTypeG7e: 8,
+			TorpTypeG7a: 9,
 			special:    6,
 		}
 	default:
@@ -250,8 +250,8 @@ func (u UBoatType) DefaultLoadout(pd PatrolDate) Loadout {
 type UBoat struct {
 	UBoatType              UBoatType
 	ID                     string
-	FwdTubes, AftTubes     []*Torpedo
-	FwdReloads, AftReloads map[Torpedo]int
+	FwdTubes, AftTubes     []*TorpType
+	FwdReloads, AftReloads map[TorpType]int
 	HasDeckGun             bool
 	DeckGunAmmo            int
 }
@@ -260,10 +260,10 @@ func NewUBoat(uBoatType UBoatType, id string) UBoat {
 	ub := UBoat{
 		UBoatType:   uBoatType,
 		ID:          id,
-		FwdTubes:    make([]*Torpedo, uBoatType.FwdTubes()),
-		AftTubes:    make([]*Torpedo, uBoatType.AftTubes()),
-		FwdReloads:  make(map[Torpedo]int),
-		AftReloads:  make(map[Torpedo]int),
+		FwdTubes:    make([]*TorpType, uBoatType.FwdTubes()),
+		AftTubes:    make([]*TorpType, uBoatType.AftTubes()),
+		FwdReloads:  make(map[TorpType]int),
+		AftReloads:  make(map[TorpType]int),
 		HasDeckGun:  uBoatType.HasDeckGun(),
 		DeckGunAmmo: uBoatType.DeckGunAmmo(),
 	}

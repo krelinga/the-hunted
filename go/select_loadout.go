@@ -32,16 +32,16 @@ func (g *Game) formForSelectLoadout() Form {
 	var extraE, extraA []Loadout
 
 	for i := 1; i <= 4; i++ {
-		if defLoadout[TorpedoG7a]-i >= 0 {
+		if defLoadout[TorpTypeG7a]-i >= 0 {
 			l := maps.Clone(defLoadout)
-			l[TorpedoG7a] -= i
-			l[TorpedoG7e] += i
+			l[TorpTypeG7a] -= i
+			l[TorpTypeG7e] += i
 			extraE = append(extraE, l)
 		}
-		if defLoadout[TorpedoG7e]-i >= 0 {
+		if defLoadout[TorpTypeG7e]-i >= 0 {
 			l := maps.Clone(defLoadout)
-			l[TorpedoG7e] -= i
-			l[TorpedoG7a] += i
+			l[TorpTypeG7e] -= i
+			l[TorpTypeG7a] += i
 			extraA = append(extraA, l)
 		}
 	}
