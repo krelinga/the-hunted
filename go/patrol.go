@@ -39,10 +39,14 @@ func (p PatrolDate) Validate() error {
 	return nil
 }
 
-func (p PatrolDate) Year() int {
+func (p PatrolDate) Must() {
 	if err := p.Validate(); err != nil {
-		return 0
+		panic(err)
 	}
+}
+
+func (p PatrolDate) Year() int {
+	p.Must()
 	return 1943 + int((p-7)/12)
 }
 
