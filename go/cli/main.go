@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	thehunted "github.com/krelinga/the-hunted/go"
@@ -24,7 +25,7 @@ func main() {
 			log.Fatalf("error advancing game: %v", err)
 		}
 		for _, event := range events {
-			log.Printf("event: %s", event)
+			fmt.Printf("event: %s\n", event)
 		}
 	}
 }
