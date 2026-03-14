@@ -5,8 +5,8 @@ import "fmt"
 type StartGameForm struct {
 	baseForm
 	UBoatType SelectFormField[UBoatType]
-	UBoatID TextFormField
-	KmdtName TextFormField
+	UBoatID   TextFormField
+	KmdtName  TextFormField
 }
 
 func (f *StartGameForm) Validate() error {
@@ -49,7 +49,7 @@ func (e UBoatTypeSelectedEvent) String() string {
 type FirstPatrolDateSetEvent struct {
 	baseEvent
 	FirstPatrolDate PatrolDate
-	UBoatType UBoatType
+	UBoatType       UBoatType
 }
 
 func (e FirstPatrolDateSetEvent) String() string {
@@ -58,8 +58,8 @@ func (e FirstPatrolDateSetEvent) String() string {
 
 type StartingRankSetEvent struct {
 	baseEvent
-	D6 D6
-	Rank Rank
+	D6         D6
+	Rank       Rank
 	PatrolDate PatrolDate
 }
 
@@ -88,10 +88,9 @@ func (g *Game) advanceFromNotStarted(form Form) ([]Event, error) {
 	}
 	rankD6 := g.Roller.RollD6()
 	var rankThreshold D6
-	switch g.startPatrolDate {
-	case PatrolDateJul43, PatrolDateAug43, PatrolDateSep43, PatrolDateOct43, PatrolDateNov43, PatrolDateDec43:
+	if g.startPatrolDate.Year() <= 1943 {
 		rankThreshold = 4
-	default:
+	} else {
 		rankThreshold = 5
 	}
 	if rankD6 <= rankThreshold {

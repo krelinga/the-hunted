@@ -39,6 +39,13 @@ func (p PatrolDate) Validate() error {
 	return nil
 }
 
+func (p PatrolDate) Year() int {
+	if err := p.Validate(); err != nil {
+		return 0
+	}
+	return 1943 + int((p-7)/12)
+}
+
 func (p PatrolDate) String() string {
 	switch p {
 	case PatrolDateJul43:
