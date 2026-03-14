@@ -170,6 +170,68 @@ func (u UBoatType) HasDeckGun() bool {
 	return u.DeckGunAmmo() > 0
 }
 
+func (u UBoatType) DefaultLoadout(pd PatrolDate) map[Torpedo]int {
+	u.Must()
+	pd.Must()
+
+	var special Torpedo
+	switch {
+	case pd < PatrolDateAug43:
+		special = TorpedoG7eFalke
+	case pd < PatrolDateApr45:
+		special = TorpedoG7esZaunkonig
+	default:
+		special = TorpedoG7esZaunkonigII
+	}
+
+	switch u {
+	case UBoatTypeVIIB, UBoatTypeVIIC, UBoatTypeVIIC41, UBoatTypeVIID:
+		return map[Torpedo]int{
+			TorpedoG7e: 8,
+			TorpedoG7a: 4,
+			special:    2,
+		}
+	case UBoatTypeVIICFlak:
+		return map[Torpedo]int{
+			TorpedoG7a: 3,
+			special:    2,
+		}
+	case UBoatTypeIXB, UBoatTypeIXC, UBoatTypeIXC40, UBoatTypeIXD42:
+		return map[Torpedo]int{
+			TorpedoG7e: 10,
+			TorpedoG7a: 10,
+			special:    2,
+		}
+	case UBoatTypeIXD2:
+		return map[Torpedo]int{
+			TorpedoG7e: 10,
+			TorpedoG7a: 10,
+			special:    4,
+		}
+	case UBoatTypeXB:
+		return map[Torpedo]int{
+			TorpedoG7e: 3,
+			special:    2,
+		}
+	case UBoatTypeXII:
+		return map[Torpedo]int{
+			TorpedoG7e: 8,
+			TorpedoG7a: 8,
+			special:    4,
+		}
+	case UBoatTypeXIV:
+		return nil
+	case UBoatTypeXXI:
+		return map[Torpedo]int{
+			TorpedoG7e: 8,
+			TorpedoG7a: 9,
+			special:    6,
+		}
+	default:
+		panic("unreachable code")
+	}
+}
+
 type UBoat struct {
 	UBoatType              UBoatType
 	ID                     string
@@ -181,13 +243,13 @@ type UBoat struct {
 
 func NewUBoat(uBoatType UBoatType, id string) UBoat {
 	ub := UBoat{
-		UBoatType: uBoatType,
-		ID:        id,
-		FwdTubes:  make([]*Torpedo, uBoatType.FwdTubes()),
-		AftTubes:  make([]*Torpedo, uBoatType.AftTubes()),
-		FwdReloads: make(map[Torpedo]int),
-		AftReloads: make(map[Torpedo]int),
-		HasDeckGun: uBoatType.HasDeckGun(),
+		UBoatType:   uBoatType,
+		ID:          id,
+		FwdTubes:    make([]*Torpedo, uBoatType.FwdTubes()),
+		AftTubes:    make([]*Torpedo, uBoatType.AftTubes()),
+		FwdReloads:  make(map[Torpedo]int),
+		AftReloads:  make(map[Torpedo]int),
+		HasDeckGun:  uBoatType.HasDeckGun(),
 		DeckGunAmmo: uBoatType.DeckGunAmmo(),
 	}
 	return ub
