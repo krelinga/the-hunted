@@ -67,6 +67,15 @@ func (e StartingRankSetEvent) String() string {
 	return fmt.Sprintf("Starting rank set: %s (based on d6 roll %s and patrol date %s)", e.Rank, e.D6, e.PatrolDate)
 }
 
+type CrewQualitySetEvent struct {
+	baseEvent
+	CrewQuality CrewQuality
+}
+
+func (e CrewQualitySetEvent) String() string {
+	return fmt.Sprintf("Crew quality set: %s", e.CrewQuality)
+}
+
 func (g *Game) advanceFromNotStarted(form Form) ([]Event, error) {
 	startGameForm, ok := form.(*StartGameForm)
 	if !ok {
@@ -100,6 +109,8 @@ func (g *Game) advanceFromNotStarted(form Form) ([]Event, error) {
 		g.kmdtRank = RankKptLt
 	}
 	events = append(events, StartingRankSetEvent{D6: rankD6, Rank: g.kmdtRank, PatrolDate: g.startPatrolDate})
+	g.crewQuality = CrewQualityTrained
+	events = append(events, CrewQualitySetEvent{CrewQuality: g.crewQuality})
 	g.gameState = GameStateInPort
 	events = append(events, GameStateSetEvent{GameState: g.gameState})
 	return events, nil
