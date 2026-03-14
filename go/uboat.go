@@ -94,69 +94,101 @@ func (u UBoatType) FirstPatrolDate() PatrolDate {
 	}
 }
 
+func (u UBoatType) FwdTubes() int {
+	u.Must()
+	switch u {
+	case UBoatTypeXB, UBoatTypeXIV:
+		return 0
+	case UBoatTypeXII, UBoatTypeXXI:
+		return 6
+	default:
+		return 4
+	}
+}
+
+func (u UBoatType) AftTubes() int {
+	u.Must()
+	switch u {
+	case UBoatTypeXIV, UBoatTypeXXI:
+		return 0
+	case UBoatTypeVIIB, UBoatTypeVIIC, UBoatTypeVIIC41, UBoatTypeVIID, UBoatTypeVIICFlak:
+		return 1
+	default:
+		return 2
+	}
+}
+
+func (u UBoatType) FwdReloads() int {
+	u.Must()
+	switch u {
+	case UBoatTypeXB, UBoatTypeXIV:
+		return 0
+	case UBoatTypeXII:
+		return 10
+	case UBoatTypeIXB, UBoatTypeIXC, UBoatTypeIXC40, UBoatTypeIXD42:
+		return 14
+	case UBoatTypeIXD2:
+		return 16
+	case UBoatTypeXXI:
+		return 17
+	default:
+		return 8
+	}
+}
+
+func (u UBoatType) AftReloads() int {
+	u.Must()
+	switch u {
+	case UBoatTypeXIV, UBoatTypeXXI:
+		return 0
+	case UBoatTypeVIIB, UBoatTypeVIIC, UBoatTypeVIIC41, UBoatTypeVIID, UBoatTypeVIICFlak:
+		return 1
+	case UBoatTypeXB:
+		return 3
+	default:
+		return 2
+	}
+}
+
+func (u UBoatType) DeckGunAmmo() int {
+	u.Must()
+	switch u {
+	case UBoatTypeIXB, UBoatTypeIXC, UBoatTypeIXC40:
+		return 5
+	case UBoatTypeIXD2:
+		return 6
+	case UBoatTypeIXD42:
+		return 7
+	case UBoatTypeVIIB, UBoatTypeVIIC, UBoatTypeVIIC41, UBoatTypeVIID, UBoatTypeXII:
+		return 10
+	default:
+		return 0
+	}
+}
+
+func (u UBoatType) HasDeckGun() bool {
+	return u.DeckGunAmmo() > 0
+}
+
 type UBoat struct {
-	UBoatType                UBoatType
-	ID                       string
-	FwdTubes, AftTubes       []*Torpedo
-	FwdReloads, AftReloads   map[Torpedo]int
-	FwdCapacity, AftCapacity int
-	HasDeckGun               bool
-	DeckGunAmmo              int
+	UBoatType              UBoatType
+	ID                     string
+	FwdTubes, AftTubes     []*Torpedo
+	FwdReloads, AftReloads map[Torpedo]int
+	HasDeckGun             bool
+	DeckGunAmmo            int
 }
 
 func NewUBoat(uBoatType UBoatType, id string) UBoat {
 	ub := UBoat{
 		UBoatType: uBoatType,
 		ID:        id,
-	}
-	fwd := func(tubes, capacity int) {
-		ub.FwdTubes = make([]*Torpedo, tubes)
-		ub.FwdReloads = make(map[Torpedo]int)
-		ub.FwdCapacity = capacity
-	}
-	aft := func(tubes, capacity int) {
-		ub.AftTubes = make([]*Torpedo, tubes)
-		ub.AftReloads = make(map[Torpedo]int)
-		ub.AftCapacity = capacity
-	}
-	deckGun := func(ammo int) {
-		ub.HasDeckGun = true
-		ub.DeckGunAmmo = ammo
-	}
-	switch uBoatType {
-	case UBoatTypeVIIB, UBoatTypeVIIC, UBoatTypeVIIC41, UBoatTypeVIID:
-		fwd(4, 8)
-		aft(1, 1)
-		deckGun(10)
-	case UBoatTypeVIICFlak:
-		fwd(4, 8)
-		aft(1, 1)
-	case UBoatTypeIXB, UBoatTypeIXC, UBoatTypeIXC40:
-		fwd(4, 14)
-		aft(2, 2)
-		deckGun(5)
-	case UBoatTypeIXD42:
-		fwd(4, 14)
-		aft(2, 2)
-		deckGun(7)
-	case UBoatTypeIXD2:
-		fwd(4, 16)
-		aft(2, 2)
-		deckGun(6)
-	case UBoatTypeXB:
-		fwd(0, 0)
-		aft(2, 3)
-		deckGun(8)
-	case UBoatTypeXII:
-		fwd(6, 10)
-		aft(2, 2)
-		deckGun(10)
-	case UBoatTypeXIV:
-		fwd(0, 0)
-		aft(0, 0)
-	case UBoatTypeXXI:
-		fwd(6, 17)
-		aft(0, 0)
+		FwdTubes:  make([]*Torpedo, uBoatType.FwdTubes()),
+		AftTubes:  make([]*Torpedo, uBoatType.AftTubes()),
+		FwdReloads: make(map[Torpedo]int),
+		AftReloads: make(map[Torpedo]int),
+		HasDeckGun: uBoatType.HasDeckGun(),
+		DeckGunAmmo: uBoatType.DeckGunAmmo(),
 	}
 	return ub
 }
