@@ -42,3 +42,59 @@ func (t TorpType) String() string {
 		return fmt.Sprintf("Unknown torpedo (%d)", t)
 	}
 }
+
+type TorpLoc struct {
+	facing Facing
+	tube int
+}
+
+func NewTorpLocTube(f Facing, tube int) TorpLoc {
+	if tube < 1 {
+		panic(fmt.Sprintf("invalid tube number: %d", tube))
+	}
+	return TorpLoc{
+		facing: f,
+		tube: tube,
+	}
+}
+
+func NewTorpLocReload(f Facing) TorpLoc {
+	return TorpLoc{
+		facing: f,
+		tube: 0,
+	}
+}
+
+func (l TorpLoc) String() string {
+	if l.tube == 0 {
+		return fmt.Sprintf("%s reload", l.facing)
+	}
+	return fmt.Sprintf("%s tube %d", l.facing, l.tube)
+}
+
+func (l TorpLoc) IsTube() bool {
+	return l.tube != 0
+}
+
+func (l TorpLoc) Tube() (int, bool) {
+	return l.tube, l.IsTube()
+}
+
+func (l TorpLoc) IsReload() bool {
+	return l.tube == 0
+}
+
+func (l TorpLoc) Facing() Facing {
+	return l.facing
+}
+
+// TODO: decide if I like this ordering.
+func TorpLocCmp(a, b TorpLoc) int {
+	if a.facing != b.facing {
+		if a.facing == FacingFwd {
+			return -1
+		}
+		return 1
+	}
+	return a.tube - b.tube
+}

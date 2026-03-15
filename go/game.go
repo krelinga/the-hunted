@@ -15,7 +15,6 @@ type Game struct {
 	crewQuality     CrewQuality
 	gameState       GameState
 	startPatrolDate PatrolDate
-	nextLoadout     Loadout
 }
 
 func (g *Game) KmdtName() string {
@@ -32,10 +31,6 @@ func (g *Game) CrewQuality() CrewQuality {
 
 func (g *Game) GameState() GameState {
 	return g.gameState
-}
-
-func (g *Game) NextLoadout() Loadout {
-	return g.nextLoadout
 }
 
 type GameState int

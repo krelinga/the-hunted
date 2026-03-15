@@ -204,35 +204,35 @@ func (u UBoatType) DefaultLoadout(pd PatrolDate) Loadout {
 		return Loadout{
 			TorpTypeG7e: 8,
 			TorpTypeG7a: 4,
-			special:    2,
+			special:     2,
 		}
 	case UBoatTypeVIICFlak:
 		return Loadout{
 			TorpTypeG7a: 3,
-			special:    2,
+			special:     2,
 		}
 	case UBoatTypeIXB, UBoatTypeIXC, UBoatTypeIXC40, UBoatTypeIXD42:
 		return Loadout{
 			TorpTypeG7e: 10,
 			TorpTypeG7a: 10,
-			special:    2,
+			special:     2,
 		}
 	case UBoatTypeIXD2:
 		return Loadout{
 			TorpTypeG7e: 10,
 			TorpTypeG7a: 10,
-			special:    4,
+			special:     4,
 		}
 	case UBoatTypeXB:
 		return Loadout{
 			TorpTypeG7e: 3,
-			special:    2,
+			special:     2,
 		}
 	case UBoatTypeXII:
 		return Loadout{
 			TorpTypeG7e: 8,
 			TorpTypeG7a: 8,
-			special:    4,
+			special:     4,
 		}
 	case UBoatTypeXIV:
 		return nil
@@ -240,7 +240,7 @@ func (u UBoatType) DefaultLoadout(pd PatrolDate) Loadout {
 		return Loadout{
 			TorpTypeG7e: 8,
 			TorpTypeG7a: 9,
-			special:    6,
+			special:     6,
 		}
 	default:
 		panic("unreachable code")
@@ -248,24 +248,32 @@ func (u UBoatType) DefaultLoadout(pd PatrolDate) Loadout {
 }
 
 type UBoat struct {
-	UBoatType              UBoatType
-	ID                     string
-	FwdTubes, AftTubes     []*TorpType
-	FwdReloads, AftReloads map[TorpType]int
-	HasDeckGun             bool
-	DeckGunAmmo            int
+	UBoatType   UBoatType
+	ID          string
+	Torpedos    map[TorpLoc]Loadout
+	HasDeckGun  bool
+	DeckGunAmmo int
 }
 
 func NewUBoat(uBoatType UBoatType, id string) UBoat {
 	ub := UBoat{
 		UBoatType:   uBoatType,
 		ID:          id,
-		FwdTubes:    make([]*TorpType, uBoatType.FwdTubes()),
-		AftTubes:    make([]*TorpType, uBoatType.AftTubes()),
-		FwdReloads:  make(map[TorpType]int),
-		AftReloads:  make(map[TorpType]int),
+		Torpedos:    make(map[TorpLoc]Loadout),
 		HasDeckGun:  uBoatType.HasDeckGun(),
 		DeckGunAmmo: uBoatType.DeckGunAmmo(),
+	}
+	for i := 1; i <= uBoatType.FwdTubes(); i++ {
+		ub.Torpedos[NewTorpLocTube(FacingFwd, i)] = Loadout{}
+	}
+	for i := 1; i <= uBoatType.AftTubes(); i++ {
+		ub.Torpedos[NewTorpLocTube(FacingAft, i)] = Loadout{}
+	}
+	if uBoatType.FwdReloads() > 0 {
+		ub.Torpedos[NewTorpLocReload(FacingFwd)] = Loadout{}
+	}
+	if uBoatType.AftReloads() > 0 {
+		ub.Torpedos[NewTorpLocReload(FacingAft)] = Loadout{}
 	}
 	return ub
 }
