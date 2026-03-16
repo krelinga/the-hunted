@@ -70,34 +70,44 @@ func handleSelectLoadout(form *thehunted.SelectLoadoutForm) error {
 	var aftReloadSlots []thehunted.TorpType
 	if aftReloads, ok := form.Layout[thehunted.NewTorpLocReload(thehunted.FacingAft)]; ok {
 		capacity := aftReloads.Capacity
-		groups = append(groups, huh.NewGroup(
-			huh.NewMultiSelect[thehunted.TorpType]().
-				OptionsFunc(func() []huh.Option[thehunted.TorpType] {
-					overall := maps.Clone(form.Overall.Options[form.Overall.Selected])
-					for j := 0; j < len(selectedTorps); j++ {
-						overall[selectedTorps[j]]--
-					}
-					torpTypes := []thehunted.TorpType{}
-					for torpType, count := range overall {
-						for j := 0; j < count && j < capacity; j++ {
-							torpTypes = append(torpTypes, torpType)
+		optFunc := func() []huh.Option[thehunted.TorpType] {
+			overall := maps.Clone(form.Overall.Options[form.Overall.Selected])
+			for j := 0; j < len(selectedTorps); j++ {
+				overall[selectedTorps[j]]--
+			}
+			torpTypes := []thehunted.TorpType{}
+			for torpType, count := range overall {
+				for j := 0; j < count && j < capacity; j++ {
+					torpTypes = append(torpTypes, torpType)
+				}
+			}
+			slices.Sort(torpTypes)
+			options := []huh.Option[thehunted.TorpType]{}
+			for _, torpType := range torpTypes {
+				options = append(options, huh.NewOption(torpType.String(), torpType))
+			}
+			return options
+		}
+		if capacity == 1 {
+			aftReloadSlots = make([]thehunted.TorpType, 1)
+			groups = append(groups, huh.NewGroup(
+				huh.NewSelect[thehunted.TorpType]().
+					OptionsFunc(optFunc, nil).
+					Value(&aftReloadSlots[0]),
+			).Title("Select Torpedo for Aft Reload"))
+		} else {
+			groups = append(groups, huh.NewGroup(
+				huh.NewMultiSelect[thehunted.TorpType]().
+					OptionsFunc(optFunc, nil).
+					Value(&aftReloadSlots).
+					Validate(func(got []thehunted.TorpType) error {
+						if len(got) != capacity {
+							return fmt.Errorf("must select exactly %d torpedoes for aft reload, got %d", capacity, len(got))
 						}
-					}
-					slices.Sort(torpTypes)
-					options := []huh.Option[thehunted.TorpType]{}
-					for _, torpType := range torpTypes {
-						options = append(options, huh.NewOption(torpType.String(), torpType))
-					}
-					return options
-				}, nil).
-				Value(&aftReloadSlots).
-				Validate(func(got []thehunted.TorpType) error {
-					if len(got) != capacity {
-						return fmt.Errorf("must select exactly %d torpedoes for aft reload, got %d", capacity, len(got))
-					}
-					return nil
-				}),
-		).Title(fmt.Sprintf("Select %d Torpedo(s) for Aft Reload", capacity)))
+						return nil
+					}),
+			).Title(fmt.Sprintf("Select %d Torpedos for Aft Reload", capacity)))
+		}
 	}
 
 	huhForm := huh.NewForm(groups...)
