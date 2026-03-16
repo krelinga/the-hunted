@@ -84,6 +84,8 @@ func handleSelectLoadout(form *thehunted.SelectLoadoutForm) error {
 			slices.Sort(torpTypes)
 			options := []huh.Option[thehunted.TorpType]{}
 			for _, torpType := range torpTypes {
+				// TODO: using the same torpType more than once causes a bug in the form.
+				// We need to figure out a way to allow multiple selection of identical values without breaking the form.
 				options = append(options, huh.NewOption(torpType.String(), torpType))
 			}
 			return options
