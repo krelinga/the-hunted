@@ -195,12 +195,12 @@ type PatrolAssignment struct {
 	AbwehrAgent bool
 }
 
-func DeterminePatrolAssignment(date PatrolDate, uBoatType UBoatType, roller Roller) (PatrolAssignment, []Event) {
+func (g *Game) determinePatrolAssignment() PatrolAssignment {
 	var wolfpack, abwehrAgent bool
-	result := roller.Roll2D6()
+	result := g.Roller.Roll2D6()
 	var spot PatrolSpot
 	switch {
-	case date <= PatrolDateDec43:
+	case g.startPatrolDate <= PatrolDateDec43:
 		switch result.AsInt() {
 		case 2, 5:
 			spot = PatrolSpotIndianOcean
@@ -225,26 +225,25 @@ func DeterminePatrolAssignment(date PatrolDate, uBoatType UBoatType, roller Roll
 	}
 
 	switch {
-		case uBoatType.IsTypeIX() && spot.IsAnyOf(PatrolSpotArctic, PatrolSpotMediterranean):
+		case g.UBoat.UBoatType.IsTypeIX() && spot.IsAnyOf(PatrolSpotArctic, PatrolSpotMediterranean):
 			spot = PatrolSpotWestAfricanCoast
-		case uBoatType.IsTypeVII() && spot.IsAnyOf(PatrolSpotWestAfricanCoast, PatrolSpotBrazilianCoast, PatrolSpotIndianOcean):
+		case g.UBoat.UBoatType.IsTypeVII() && spot.IsAnyOf(PatrolSpotWestAfricanCoast, PatrolSpotBrazilianCoast, PatrolSpotIndianOcean):
 			spot = PatrolSpotAtlantic
-		case uBoatType.IsTypeVII() && uBoatType != UBoatTypeVIID && spot == PatrolSpotCaribbean:
+		case g.UBoat.UBoatType.IsTypeVII() && g.UBoat.UBoatType != UBoatTypeVIID && spot == PatrolSpotCaribbean:
 			spot = PatrolSpotAtlantic
-		case uBoatType.IsAnyOf(UBoatTypeIXD2, UBoatTypeIXD42) && spot == PatrolSpotAtlantic:
+		case g.UBoat.UBoatType.IsAnyOf(UBoatTypeIXD2, UBoatTypeIXD42) && spot == PatrolSpotAtlantic:
 			spot = PatrolSpotIndianOcean
 	}
 
+	g.writeEvent(PatrolSpotAssignmentEvent{
+		PatrolSpot: spot,
+		Result2D6:  result,
+		UBoatType:  g.UBoat.UBoatType,
+		PatrolDate: g.startPatrolDate,
+	})
 	return PatrolAssignment{
 		PatrolSpot:  spot,
 		Wolfpack:    wolfpack,
 		AbwehrAgent: abwehrAgent,
-	}, []Event{
-		PatrolSpotAssignmentEvent{
-			PatrolSpot: spot,
-			Result2D6:  result,
-			UBoatType:  uBoatType,
-			PatrolDate: date,
-		},
 	}
 }
