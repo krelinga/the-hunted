@@ -116,15 +116,14 @@ func (e LoadoutChangedEvent) String() string {
 }
 
 
-func (g *Game) advanceFromSelectLoadout(form Form) ([]Event, error) {
+func (g *Game) advanceFromSelectLoadout(form Form) error {
 	selectLoadoutForm, ok := form.(*SelectLoadoutForm)
 	if !ok {
-		return nil, fmt.Errorf("%w: expected *SelectLoadoutForm, got %T", ErrUnexpectedForm, form)
+		return fmt.Errorf("%w: expected *SelectLoadoutForm, got %T", ErrUnexpectedForm, form)
 	}
 	if err := selectLoadoutForm.Validate(); err != nil {
-		return nil, err
+		return err
 	}
-	events := []Event{}
 	locs := slices.Collect(maps.Keys(selectLoadoutForm.Layout))
 	slices.SortFunc(locs, func(a, b TorpLoc) int {
 		if a.IsTube() != b.IsTube() {
@@ -149,12 +148,12 @@ func (g *Game) advanceFromSelectLoadout(form Form) ([]Event, error) {
 	for _, loc := range locs {
 		loadout := Loadout(selectLoadoutForm.Layout[loc].Items)
 		g.UBoat.Torpedos[loc] = maps.Clone(loadout)
-		events = append(events, LoadoutChangedEvent{
+		g.writeEvent(LoadoutChangedEvent{
 			TorpLoc: loc,
 			Loadout: maps.Clone(loadout),
 		})
 	}
 	g.gameState = GameStateInPort
-	events = append(events, GameStateSetEvent{GameState: g.gameState})
-	return events, nil
+	g.writeEvent(GameStateSetEvent{GameState: g.gameState})
+	return nil
 }

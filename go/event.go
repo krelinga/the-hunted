@@ -9,3 +9,7 @@ type Event interface {
 type baseEvent struct {}
 
 func (_ baseEvent) eventIsAClosedType() {}
+
+type EventWriter interface {
+	WriteEvent(Event)
+}

@@ -76,22 +76,21 @@ func (e CrewQualitySetEvent) String() string {
 	return fmt.Sprintf("Crew quality set: %s", e.CrewQuality)
 }
 
-func (g *Game) advanceFromNotStarted(form Form) ([]Event, error) {
+func (g *Game) advanceFromNotStarted(form Form) error {
 	startGameForm, ok := form.(*StartGameForm)
 	if !ok {
-		return nil, fmt.Errorf("%w: expected *StartGameForm, got %T", ErrUnexpectedForm, form)
+		return fmt.Errorf("%w: expected *StartGameForm, got %T", ErrUnexpectedForm, form)
 	}
 	if err := startGameForm.Validate(); err != nil {
-		return nil, err
+		return err
 	}
-	var events []Event
 	g.kmdtName = string(startGameForm.KmdtName)
-	events = append(events, KmdtNamedEvent{KmdtName: g.kmdtName})
+	g.writeEvent(KmdtNamedEvent{KmdtName: g.kmdtName})
 	uboatType := startGameForm.UBoatType.Options[startGameForm.UBoatType.Selected]
 	g.UBoat = NewUBoat(uboatType, string(startGameForm.UBoatID))
-	events = append(events, UBoatTypeSelectedEvent{UBoatType: uboatType})
+	g.writeEvent(UBoatTypeSelectedEvent{UBoatType: uboatType})
 	g.startPatrolDate = uboatType.FirstPatrolDate()
-	events = append(events, FirstPatrolDateSetEvent{FirstPatrolDate: g.startPatrolDate, UBoatType: uboatType})
+	g.writeEvent(FirstPatrolDateSetEvent{FirstPatrolDate: g.startPatrolDate, UBoatType: uboatType})
 	rankD6 := g.Roller.RollD6()
 	var rankThreshold ResultD6
 	if g.startPatrolDate.Year() <= 1943 {
@@ -104,10 +103,10 @@ func (g *Game) advanceFromNotStarted(form Form) ([]Event, error) {
 	} else {
 		g.kmdtRank = RankKptLt
 	}
-	events = append(events, StartingRankSetEvent{D6: rankD6, Rank: g.kmdtRank, PatrolDate: g.startPatrolDate})
+	g.writeEvent(StartingRankSetEvent{D6: rankD6, Rank: g.kmdtRank, PatrolDate: g.startPatrolDate})
 	g.crewQuality = CrewQualityTrained
-	events = append(events, CrewQualitySetEvent{CrewQuality: g.crewQuality})
+	g.writeEvent(CrewQualitySetEvent{CrewQuality: g.crewQuality})
 	g.gameState = GameStateSelectLoadout
-	events = append(events, GameStateSetEvent{GameState: g.gameState})
-	return events, nil
+	g.writeEvent(GameStateSetEvent{GameState: g.gameState})
+	return nil
 }

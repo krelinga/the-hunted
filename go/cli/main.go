@@ -7,9 +7,16 @@ import (
 	thehunted "github.com/krelinga/the-hunted/go"
 )
 
+type EventWriterPrinter struct {}
+
+func (e EventWriterPrinter) WriteEvent(event thehunted.Event) {
+	fmt.Printf("event: %s\n", event)
+}
+
 func main() {
 	g := thehunted.Game{
-		Roller: thehunted.RandomRoller{},
+		Roller:      thehunted.RandomRoller{},
+		EventWriter: EventWriterPrinter{},
 	}
 	for !g.IsFinished() {
 		f := g.Form()
@@ -25,12 +32,8 @@ func main() {
 		if err != nil {
 			log.Fatalf("form population error: %v", err)
 		}
-		if events, err := g.Advance(f); err != nil {
+		if err := g.Advance(f); err != nil {
 			log.Fatalf("error advancing game: %v", err)
-		} else {
-			for _, event := range events {
-				fmt.Printf("event: %s\n", event)
-			}
 		}
 	}
 }

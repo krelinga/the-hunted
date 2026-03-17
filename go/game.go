@@ -6,7 +6,8 @@ import (
 )
 
 type Game struct {
-	Roller Roller
+	Roller      Roller
+	EventWriter EventWriter
 
 	UBoat UBoat
 
@@ -15,6 +16,12 @@ type Game struct {
 	crewQuality     CrewQuality
 	gameState       GameState
 	startPatrolDate PatrolDate
+}
+
+func (g *Game) writeEvent(event Event) {
+	if g.EventWriter != nil {
+		g.EventWriter.WriteEvent(event)
+	}
 }
 
 func (g *Game) KmdtName() string {
@@ -67,7 +74,7 @@ func (g *Game) Form() Form {
 	}
 }
 
-func (g *Game) Advance(form Form) ([]Event, error) {
+func (g *Game) Advance(form Form) error {
 	switch g.gameState {
 	case GameStateNotStarted:
 		return g.advanceFromNotStarted(form)
