@@ -3,6 +3,7 @@ package thehunted
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -278,12 +279,7 @@ func (u UBoatType) IsTypeIX() bool {
 }
 
 func (u UBoatType) IsAnyOf(types ...UBoatType) bool {
-	for _, t := range types {
-		if u == t {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(types, u)
 }
 
 type UBoat struct {

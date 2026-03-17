@@ -1,6 +1,7 @@
 package thehunted
 
 import (
+	"slices"
 	"errors"
 	"fmt"
 )
@@ -169,12 +170,7 @@ func (p PatrolSpot) Must() {
 }
 
 func (p PatrolSpot) IsAnyOf(spots ...PatrolSpot) bool {
-	for _, spot := range spots {
-		if p == spot {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(spots, p)
 }
 
 type PatrolSpotAssignmentEvent struct {
