@@ -106,7 +106,6 @@ func (g *Game) advanceFromNotStarted(form Form) error {
 	g.writeEvent(StartingRankSetEvent{D6: rankD6, Rank: g.kmdtRank, PatrolDate: g.startPatrolDate})
 	g.crewQuality = CrewQualityTrained
 	g.writeEvent(CrewQualitySetEvent{CrewQuality: g.crewQuality})
-	g.gameState = GameStateSelectLoadout
-	g.writeEvent(GameStateSetEvent{GameState: g.gameState})
+	g.setGameState(GameStateSelectLoadout)
 	return nil
 }

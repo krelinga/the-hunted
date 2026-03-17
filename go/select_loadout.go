@@ -153,7 +153,6 @@ func (g *Game) advanceFromSelectLoadout(form Form) error {
 			Loadout: maps.Clone(loadout),
 		})
 	}
-	g.gameState = GameStateInPort
-	g.writeEvent(GameStateSetEvent{GameState: g.gameState})
+	g.setGameState(GameStateInPort)
 	return nil
 }

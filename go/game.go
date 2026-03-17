@@ -24,6 +24,11 @@ func (g *Game) writeEvent(event Event) {
 	}
 }
 
+func (g *Game) setGameState(gameState GameState) {
+	g.gameState = gameState
+	g.writeEvent(GameStateSetEvent{GameState: g.gameState})
+}
+
 func (g *Game) KmdtName() string {
 	return g.kmdtName
 }
