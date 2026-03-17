@@ -1,6 +1,9 @@
 package thehunted
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 type PatrolDate int
 
@@ -104,5 +107,144 @@ func (p PatrolDate) String() string {
 }
 
 type PatrolState struct {
-	
+}
+
+type PatrolSpot int
+
+const (
+	PatrolSpotAtlantic = iota + 1
+	PatrolSpotIndianOcean
+	PatrolSpotBritishIsles
+	PatrolSpotNorthAmerica
+	PatrolSpotMediterranean
+	PatrolSpotBrazilianCoast
+	PatrolSpotWestAfricanCoast
+	PatrolSpotInvasion
+	PatrolSpotArctic
+	PatrolSpotCaribbean
+)
+
+func (p PatrolSpot) String() string {
+	switch p {
+	case PatrolSpotAtlantic:
+		return "Atlantic"
+	case PatrolSpotIndianOcean:
+		return "Indian Ocean"
+	case PatrolSpotBritishIsles:
+		return "British Isles"
+	case PatrolSpotNorthAmerica:
+		return "North America"
+	case PatrolSpotMediterranean:
+		return "Mediterranean"
+	case PatrolSpotBrazilianCoast:
+		return "Brazilian Coast"
+	case PatrolSpotWestAfricanCoast:
+		return "West African Coast"
+	case PatrolSpotInvasion:
+		return "Invasion"
+	case PatrolSpotArctic:
+		return "Arctic"
+	case PatrolSpotCaribbean:
+		return "Caribbean"
+	default:
+		return fmt.Sprintf("Invalid Patrol Spot (%d)", p)
+	}
+}
+
+var ErrInvalidPatrolSpot = errors.New("invalid patrol spot")
+
+func (p PatrolSpot) Validate() error {
+	switch p {
+	case PatrolSpotAtlantic, PatrolSpotIndianOcean, PatrolSpotBritishIsles, PatrolSpotNorthAmerica, PatrolSpotMediterranean, PatrolSpotBrazilianCoast, PatrolSpotWestAfricanCoast, PatrolSpotInvasion, PatrolSpotArctic, PatrolSpotCaribbean:
+		return nil
+	default:
+		return fmt.Errorf("%w: %d", ErrInvalidPatrolSpot, p)
+	}
+}
+
+func (p PatrolSpot) Must() {
+	if err := p.Validate(); err != nil {
+		panic(err)
+	}
+}
+
+func (p PatrolSpot) IsAnyOf(spots ...PatrolSpot) bool {
+	for _, spot := range spots {
+		if p == spot {
+			return true
+		}
+	}
+	return false
+}
+
+type PatrolSpotAssignmentEvent struct {
+	baseEvent
+	PatrolSpot PatrolSpot
+	Result2D6  Result2D6
+	UBoatType  UBoatType
+	PatrolDate PatrolDate
+}
+
+func (e PatrolSpotAssignmentEvent) String() string {
+	return fmt.Sprintf("Patrol spot assigned: %s (rolled %s for %s on %s)", e.PatrolSpot, e.Result2D6, e.UBoatType, e.PatrolDate)
+}
+
+type PatrolAssignment struct {
+	PatrolSpot  PatrolSpot
+	Wolfpack    bool
+	AbwehrAgent bool
+}
+
+func DeterminePatrolAssignment(date PatrolDate, uBoatType UBoatType, roller Roller) (PatrolAssignment, []Event) {
+	var wolfpack, abwehrAgent bool
+	result := roller.Roll2D6()
+	var spot PatrolSpot
+	switch {
+	case date <= PatrolDateDec43:
+		switch result.AsInt() {
+		case 2, 5:
+			spot = PatrolSpotIndianOcean
+		case 3, 6:
+			spot = PatrolSpotAtlantic
+			wolfpack = true
+		case 4:
+			spot = PatrolSpotBritishIsles
+		case 7, 8:
+			spot = PatrolSpotAtlantic
+		case 9:
+			spot = PatrolSpotNorthAmerica
+		case 10:
+			spot = PatrolSpotMediterranean
+		case 11:
+			spot = PatrolSpotBrazilianCoast
+		case 12:
+			spot = PatrolSpotWestAfricanCoast
+		}
+	default:
+		panic("patrol assignment for dates after December 1943 not implemented yet")
+	}
+
+	switch {
+		case uBoatType.IsTypeIX() && spot.IsAnyOf(PatrolSpotArctic, PatrolSpotMediterranean):
+			spot = PatrolSpotWestAfricanCoast
+		case uBoatType.IsTypeVII() && spot.IsAnyOf(PatrolSpotWestAfricanCoast, PatrolSpotBrazilianCoast, PatrolSpotIndianOcean):
+			spot = PatrolSpotAtlantic
+		case uBoatType.IsTypeVII() && uBoatType != UBoatTypeVIID && spot == PatrolSpotCaribbean:
+			spot = PatrolSpotAtlantic
+		case uBoatType.IsAnyOf(UBoatTypeIXD2, UBoatTypeIXD42) && spot == PatrolSpotAtlantic:
+			spot = PatrolSpotIndianOcean
+	}
+
+	return PatrolAssignment{
+		PatrolSpot:  spot,
+		Wolfpack:    wolfpack,
+		AbwehrAgent: abwehrAgent,
+	}, []Event{
+		PatrolSpotAssignmentEvent{
+			PatrolSpot: spot,
+			Result2D6:  result,
+			UBoatType:  uBoatType,
+			PatrolDate: date,
+		},
+	}
 }

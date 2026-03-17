@@ -58,7 +58,7 @@ func (e FirstPatrolDateSetEvent) String() string {
 
 type StartingRankSetEvent struct {
 	baseEvent
-	D6         D6
+	D6         ResultD6
 	Rank       Rank
 	PatrolDate PatrolDate
 }
@@ -93,7 +93,7 @@ func (g *Game) advanceFromNotStarted(form Form) ([]Event, error) {
 	g.startPatrolDate = uboatType.FirstPatrolDate()
 	events = append(events, FirstPatrolDateSetEvent{FirstPatrolDate: g.startPatrolDate, UBoatType: uboatType})
 	rankD6 := g.Roller.RollD6()
-	var rankThreshold D6
+	var rankThreshold ResultD6
 	if g.startPatrolDate.Year() <= 1943 {
 		rankThreshold = 4
 	} else {

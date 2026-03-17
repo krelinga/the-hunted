@@ -247,6 +247,45 @@ func (u UBoatType) DefaultLoadout(pd PatrolDate) Loadout {
 	}
 }
 
+func (u UBoatType) IsMinelayer() bool {
+	u.Must()
+	switch u {
+	case UBoatTypeVIID, UBoatTypeXB:
+		return true
+	default:
+		return false
+	}
+}
+
+func (u UBoatType) IsTypeVII() bool {
+	u.Must()
+	switch u {
+	case UBoatTypeVIIB, UBoatTypeVIIC, UBoatTypeVIICFlak, UBoatTypeVIIC41, UBoatTypeVIID:
+		return true
+	default:
+		return false
+	}
+}
+
+func (u UBoatType) IsTypeIX() bool {
+	u.Must()
+	switch u {
+	case UBoatTypeIXB, UBoatTypeIXC, UBoatTypeIXC40, UBoatTypeIXD2, UBoatTypeIXD42:
+		return true
+	default:
+		return false
+	}
+}
+
+func (u UBoatType) IsAnyOf(types ...UBoatType) bool {
+	for _, t := range types {
+		if u == t {
+			return true
+		}
+	}
+	return false
+}
+
 type UBoat struct {
 	UBoatType   UBoatType
 	ID          string
