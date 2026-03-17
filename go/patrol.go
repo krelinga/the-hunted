@@ -1,9 +1,10 @@
 package thehunted
 
 import (
-	"slices"
 	"errors"
 	"fmt"
+	"slices"
+	"strings"
 )
 
 type PatrolDate int
@@ -107,9 +108,6 @@ func (p PatrolDate) String() string {
 	}
 }
 
-type PatrolState struct {
-}
-
 type PatrolSpot int
 
 const (
@@ -173,16 +171,26 @@ func (p PatrolSpot) IsAnyOf(spots ...PatrolSpot) bool {
 	return slices.Contains(spots, p)
 }
 
-type PatrolSpotAssignmentEvent struct {
+type PatrolAssignmentEvent struct {
 	baseEvent
-	PatrolSpot PatrolSpot
-	Result2D6  Result2D6
-	UBoatType  UBoatType
-	PatrolDate PatrolDate
+	PatrolAssignment PatrolAssignment
+	Result2D6        Result2D6
+	UBoatType        UBoatType
+	PatrolDate       PatrolDate
 }
 
-func (e PatrolSpotAssignmentEvent) String() string {
-	return fmt.Sprintf("Patrol spot assigned: %s (rolled %s for %s on %s)", e.PatrolSpot, e.Result2D6, e.UBoatType, e.PatrolDate)
+func (e PatrolAssignmentEvent) String() string {
+	sb := strings.Builder{}
+	sb.WriteString("Patrol assignment: ")
+	sb.WriteString(e.PatrolAssignment.PatrolSpot.String())
+	if e.PatrolAssignment.Wolfpack {
+		sb.WriteString(" (Wolfpack)")
+	}
+	if e.PatrolAssignment.AbwehrAgent {
+		sb.WriteString(" (Abwehr Agent)")
+	}
+	fmt.Fprintf(&sb, " (rolled %s for %s on %s)", e.Result2D6, e.UBoatType, e.PatrolDate)
+	return sb.String()
 }
 
 type PatrolAssignment struct {
@@ -191,7 +199,8 @@ type PatrolAssignment struct {
 	AbwehrAgent bool
 }
 
-func (g *Game) determinePatrolAssignment() PatrolAssignment {
+func (g *Game) startPatrol() {
+	// TODO: handle minelaying missions.
 	var wolfpack, abwehrAgent bool
 	result := g.Roller.Roll2D6()
 	var spot PatrolSpot
@@ -221,25 +230,36 @@ func (g *Game) determinePatrolAssignment() PatrolAssignment {
 	}
 
 	switch {
-		case g.UBoat.UBoatType.IsTypeIX() && spot.IsAnyOf(PatrolSpotArctic, PatrolSpotMediterranean):
-			spot = PatrolSpotWestAfricanCoast
-		case g.UBoat.UBoatType.IsTypeVII() && spot.IsAnyOf(PatrolSpotWestAfricanCoast, PatrolSpotBrazilianCoast, PatrolSpotIndianOcean):
-			spot = PatrolSpotAtlantic
-		case g.UBoat.UBoatType.IsTypeVII() && g.UBoat.UBoatType != UBoatTypeVIID && spot == PatrolSpotCaribbean:
-			spot = PatrolSpotAtlantic
-		case g.UBoat.UBoatType.IsAnyOf(UBoatTypeIXD2, UBoatTypeIXD42) && spot == PatrolSpotAtlantic:
-			spot = PatrolSpotIndianOcean
+	case g.UBoat.UBoatType.IsTypeIX() && spot.IsAnyOf(PatrolSpotArctic, PatrolSpotMediterranean):
+		spot = PatrolSpotWestAfricanCoast
+	case g.UBoat.UBoatType.IsTypeVII() && spot.IsAnyOf(PatrolSpotWestAfricanCoast, PatrolSpotBrazilianCoast, PatrolSpotIndianOcean):
+		spot = PatrolSpotAtlantic
+	case g.UBoat.UBoatType.IsTypeVII() && g.UBoat.UBoatType != UBoatTypeVIID && spot == PatrolSpotCaribbean:
+		spot = PatrolSpotAtlantic
+	case g.UBoat.UBoatType.IsAnyOf(UBoatTypeIXD2, UBoatTypeIXD42) && spot == PatrolSpotAtlantic:
+		spot = PatrolSpotIndianOcean
 	}
 
-	g.writeEvent(PatrolSpotAssignmentEvent{
-		PatrolSpot: spot,
-		Result2D6:  result,
-		UBoatType:  g.UBoat.UBoatType,
-		PatrolDate: g.startPatrolDate,
-	})
-	return PatrolAssignment{
+	assignment := PatrolAssignment{
 		PatrolSpot:  spot,
 		Wolfpack:    wolfpack,
 		AbwehrAgent: abwehrAgent,
 	}
+	g.writeEvent(PatrolAssignmentEvent{
+		PatrolAssignment: assignment,
+		Result2D6:        result,
+		UBoatType:        g.UBoat.UBoatType,
+		PatrolDate:       g.startPatrolDate,
+	})
+	g.Patrols = append(g.Patrols, Patrol{
+		PatrolAssignment: assignment,
+		PatrolDate:       g.startPatrolDate,
+	})
+	// TODO: implement more.
+	g.setGameState(GameStateFinished)
+}
+
+type Patrol struct {
+	PatrolAssignment PatrolAssignment
+	PatrolDate       PatrolDate
 }

@@ -10,7 +10,7 @@ import (
 type SelectLoadoutForm struct {
 	baseForm
 	Overall SelectFormField[Loadout]
-	Layout LayoutFormField[TorpLoc, TorpType]
+	Layout  LayoutFormField[TorpLoc, TorpType]
 }
 
 func (f *SelectLoadoutForm) Validate() error {
@@ -63,7 +63,7 @@ func (g *Game) formForSelectLoadout() Form {
 
 	form := &SelectLoadoutForm{
 		Overall: SelectFormField[Loadout]{
-			Options: options,
+			Options:  options,
 			Selected: len(extraE),
 		},
 		Layout: LayoutFormField[TorpLoc, TorpType]{},
@@ -115,7 +115,6 @@ func (e LoadoutChangedEvent) String() string {
 	return fmt.Sprintf("Changed loadout for %s: %s", e.TorpLoc, strings.Join(deltas, ", "))
 }
 
-
 func (g *Game) advanceFromSelectLoadout(form Form) error {
 	selectLoadoutForm, ok := form.(*SelectLoadoutForm)
 	if !ok {
@@ -153,6 +152,6 @@ func (g *Game) advanceFromSelectLoadout(form Form) error {
 			Loadout: maps.Clone(loadout),
 		})
 	}
-	g.setGameState(GameStateInPort)
+	g.startPatrol()
 	return nil
 }

@@ -9,7 +9,8 @@ type Game struct {
 	Roller      Roller
 	EventWriter EventWriter
 
-	UBoat UBoat
+	UBoat   UBoat
+	Patrols []Patrol
 
 	kmdtName        string
 	kmdtRank        Rank
@@ -50,7 +51,7 @@ type GameState int
 const (
 	GameStateNotStarted GameState = iota
 	GameStateSelectLoadout
-	GameStateInPort
+	GameStateFinished
 )
 
 func (gs GameState) String() string {
@@ -59,8 +60,8 @@ func (gs GameState) String() string {
 		return "Not Started"
 	case GameStateSelectLoadout:
 		return "Select Loadout"
-	case GameStateInPort:
-		return "In Port"
+	case GameStateFinished:
+		return "Finished"
 	default:
 		return fmt.Sprintf("Unknown GameState (%d)", gs)
 	}
@@ -91,7 +92,7 @@ func (g *Game) Advance(form Form) error {
 }
 
 func (g *Game) IsFinished() bool {
-	return false
+	return g.gameState == GameStateFinished
 }
 
 type GameStateSetEvent struct {
