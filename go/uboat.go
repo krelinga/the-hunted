@@ -3,8 +3,11 @@ package thehunted
 import (
 	"errors"
 	"fmt"
+	"iter"
 	"slices"
 	"strings"
+
+	"github.com/krelinga/the-hunted/go/views"
 )
 
 type UBoatType int
@@ -173,20 +176,73 @@ func (u UBoatType) HasDeckGun() bool {
 	return u.DeckGunAmmo() > 0
 }
 
-type Loadout map[TorpType]int
+type TorpCountsView interface {
+	views.Map[TorpType, int]
+	String() string
+}
 
-func (l Loadout) String() string {
+type TorpCountsData map[TorpType]int
+
+func (d TorpCountsData) Get(key TorpType) (int, bool) {
+	return views.MapGet(d, key)
+}
+
+func (d TorpCountsData) All() iter.Seq2[TorpType, int] {
+	return views.MapAll(d)
+}
+
+func (d TorpCountsData) Keys() iter.Seq[TorpType] {
+	return views.MapKeys(d)
+}
+
+func (d TorpCountsData) Values() iter.Seq[int] {
+	return views.MapValues(d)
+}
+
+func (d TorpCountsData) Len() int {
+	return views.MapLen(d)
+}
+
+func (d TorpCountsData) String() string {
 	kinds := []TorpType{TorpTypeG7e, TorpTypeG7a, TorpTypeG7esZaunkonig, TorpTypeG7esZaunkonigII, TorpTypeG7eFalke}
 	var parts []string
 	for _, kind := range kinds {
-		if count, ok := l[kind]; ok && count > 0 {
+		if count, ok := d[kind]; ok && count > 0 {
 			parts = append(parts, fmt.Sprintf("%dx %s", count, kind))
 		}
 	}
 	return fmt.Sprintf("[%s]", strings.Join(parts, ", "))
 }
 
-func (u UBoatType) DefaultLoadout(pd PatrolDate) Loadout {
+type TorpLayoutView = views.Map[TorpLoc, TorpCountsView]
+
+type TorpLayoutData map[TorpLoc]TorpCountsData
+
+func torpCountsData2View(x TorpCountsData) TorpCountsView {
+	return x
+}
+
+func (d TorpLayoutData) Get(key TorpLoc) (TorpCountsView, bool) {
+	return views.MapGetFunc(d, key, torpCountsData2View)
+}
+
+func (d TorpLayoutData) All() iter.Seq2[TorpLoc, TorpCountsView] {
+	return views.MapAllFunc(d, torpCountsData2View)
+}
+
+func (d TorpLayoutData) Keys() iter.Seq[TorpLoc] {
+	return views.MapKeys(d)
+}
+
+func (d TorpLayoutData) Values() iter.Seq[TorpCountsView] {
+	return views.MapValuesFunc(d, torpCountsData2View)
+}
+
+func (d TorpLayoutData) Len() int {
+	return views.MapLen(d)
+}
+
+func (u UBoatType) DefaultLoadout(pd PatrolDate) TorpCountsData {
 	u.Must()
 	pd.Must()
 
@@ -202,35 +258,35 @@ func (u UBoatType) DefaultLoadout(pd PatrolDate) Loadout {
 
 	switch u {
 	case UBoatTypeVIIB, UBoatTypeVIIC, UBoatTypeVIIC41, UBoatTypeVIID:
-		return Loadout{
+		return TorpCountsData{
 			TorpTypeG7e: 8,
 			TorpTypeG7a: 4,
 			special:     2,
 		}
 	case UBoatTypeVIICFlak:
-		return Loadout{
+		return TorpCountsData{
 			TorpTypeG7a: 3,
 			special:     2,
 		}
 	case UBoatTypeIXB, UBoatTypeIXC, UBoatTypeIXC40, UBoatTypeIXD42:
-		return Loadout{
+		return TorpCountsData{
 			TorpTypeG7e: 10,
 			TorpTypeG7a: 10,
 			special:     2,
 		}
 	case UBoatTypeIXD2:
-		return Loadout{
+		return TorpCountsData{
 			TorpTypeG7e: 10,
 			TorpTypeG7a: 10,
 			special:     4,
 		}
 	case UBoatTypeXB:
-		return Loadout{
+		return TorpCountsData{
 			TorpTypeG7e: 3,
 			special:     2,
 		}
 	case UBoatTypeXII:
-		return Loadout{
+		return TorpCountsData{
 			TorpTypeG7e: 8,
 			TorpTypeG7a: 8,
 			special:     4,
@@ -238,7 +294,7 @@ func (u UBoatType) DefaultLoadout(pd PatrolDate) Loadout {
 	case UBoatTypeXIV:
 		return nil
 	case UBoatTypeXXI:
-		return Loadout{
+		return TorpCountsData{
 			TorpTypeG7e: 8,
 			TorpTypeG7a: 9,
 			special:     6,
@@ -282,33 +338,61 @@ func (u UBoatType) IsAnyOf(types ...UBoatType) bool {
 	return slices.Contains(types, u)
 }
 
-type UBoat struct {
+type UBoatView interface {
+	GetUBoatType() UBoatType
+	GetID() string
+	GetTorpLayout() TorpLayoutView
+	GetHasDeckGun() bool
+	GetDeckGunAmmo() int
+}
+
+type UBoatData struct {
 	UBoatType   UBoatType
 	ID          string
-	Torpedos    map[TorpLoc]Loadout
+	TorpLayout  TorpLayoutData
 	HasDeckGun  bool
 	DeckGunAmmo int
 }
 
-func NewUBoat(uBoatType UBoatType, id string) UBoat {
-	ub := UBoat{
+func (u *UBoatData) GetUBoatType() UBoatType {
+	return u.UBoatType
+}
+
+func (u *UBoatData) GetID() string {
+	return u.ID
+}
+
+func (u *UBoatData) GetTorpLayout() TorpLayoutView {
+	return u.TorpLayout
+}
+
+func (u *UBoatData) GetHasDeckGun() bool {
+	return u.HasDeckGun
+}
+
+func (u *UBoatData) GetDeckGunAmmo() int {
+	return u.DeckGunAmmo
+}
+
+func NewUBoat(uBoatType UBoatType, id string) *UBoatData {
+	ub := &UBoatData{
 		UBoatType:   uBoatType,
 		ID:          id,
-		Torpedos:    make(map[TorpLoc]Loadout),
+		TorpLayout:  make(TorpLayoutData),
 		HasDeckGun:  uBoatType.HasDeckGun(),
 		DeckGunAmmo: uBoatType.DeckGunAmmo(),
 	}
 	for i := 1; i <= uBoatType.FwdTubes(); i++ {
-		ub.Torpedos[NewTorpLocTube(FacingFwd, i)] = Loadout{}
+		ub.TorpLayout[NewTorpLocTube(FacingFwd, i)] = TorpCountsData{}
 	}
 	for i := 1; i <= uBoatType.AftTubes(); i++ {
-		ub.Torpedos[NewTorpLocTube(FacingAft, i)] = Loadout{}
+		ub.TorpLayout[NewTorpLocTube(FacingAft, i)] = TorpCountsData{}
 	}
 	if uBoatType.FwdReloads() > 0 {
-		ub.Torpedos[NewTorpLocReload(FacingFwd)] = Loadout{}
+		ub.TorpLayout[NewTorpLocReload(FacingFwd)] = TorpCountsData{}
 	}
 	if uBoatType.AftReloads() > 0 {
-		ub.Torpedos[NewTorpLocReload(FacingAft)] = Loadout{}
+		ub.TorpLayout[NewTorpLocReload(FacingAft)] = TorpCountsData{}
 	}
 	return ub
 }
@@ -321,7 +405,7 @@ func (e DeckGunRemovedEvent) String() string {
 	return "Deck gun removed"
 }
 
-func (u *UBoat) RemoveDeckGun() []Event {
+func (u *UBoatData) RemoveDeckGun() []Event {
 	if !u.HasDeckGun {
 		return nil
 	}

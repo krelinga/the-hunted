@@ -9,12 +9,12 @@ import (
 
 type SelectLoadoutForm struct {
 	baseForm
-	Overall SelectFormField[Loadout]
+	Overall SelectFormField[TorpCountsData]
 	Layout  LayoutFormField[TorpLoc, TorpType]
 }
 
 type SelectLoadoutResult struct {
-	Layout map[TorpLoc]Loadout
+	Layout map[TorpLoc]TorpCountsData
 }
 
 func (f *SelectLoadoutForm) Validate() error {
@@ -41,9 +41,9 @@ func (f *SelectLoadoutForm) Validate() error {
 	return nil
 }
 
-func (g *Game) formForSelectLoadout() Form {
-	defLoadout := g.UBoat.UBoatType.DefaultLoadout(g.startPatrolDate)
-	var extraE, extraA []Loadout
+func (g *gameImpl) formForSelectLoadout() Form {
+	defLoadout := g.UBoat.UBoatType.DefaultLoadout(g.StartPatrolDate)
+	var extraE, extraA []TorpCountsData
 
 	for i := 1; i <= 4; i++ {
 		if defLoadout[TorpTypeG7a]-i >= 0 {
@@ -60,13 +60,13 @@ func (g *Game) formForSelectLoadout() Form {
 		}
 	}
 	slices.Reverse(extraE)
-	var options []Loadout
+	var options []TorpCountsData
 	options = append(options, extraE...)
 	options = append(options, defLoadout)
 	options = append(options, extraA...)
 
 	form := &SelectLoadoutForm{
-		Overall: SelectFormField[Loadout]{
+		Overall: SelectFormField[TorpCountsData]{
 			Options:  options,
 			Selected: len(extraE),
 		},
@@ -95,7 +95,7 @@ func (g *Game) formForSelectLoadout() Form {
 type LoadoutChangedEvent struct {
 	baseEvent
 	TorpLoc TorpLoc
-	Loadout Loadout
+	Loadout TorpCountsData
 }
 
 func (e LoadoutChangedEvent) String() string {
@@ -119,7 +119,7 @@ func (e LoadoutChangedEvent) String() string {
 	return fmt.Sprintf("Changed loadout for %s: %s", e.TorpLoc, strings.Join(deltas, ", "))
 }
 
-func (g *Game) advanceFromSelectLoadout(form Form) error {
+func (g *gameImpl) advanceFromSelectLoadout(form Form) error {
 	selectLoadoutForm, ok := form.(*SelectLoadoutForm)
 	if !ok {
 		return fmt.Errorf("%w: expected *SelectLoadoutForm, got %T", ErrUnexpectedForm, form)
@@ -149,8 +149,8 @@ func (g *Game) advanceFromSelectLoadout(form Form) error {
 		return 0
 	})
 	for _, loc := range locs {
-		loadout := Loadout(selectLoadoutForm.Layout[loc].Items)
-		g.UBoat.Torpedos[loc] = maps.Clone(loadout)
+		loadout := TorpCountsData(selectLoadoutForm.Layout[loc].Items)
+		g.UBoat.TorpLayout[loc] = maps.Clone(loadout)
 		g.writeEvent(LoadoutChangedEvent{
 			TorpLoc: loc,
 			Loadout: maps.Clone(loadout),

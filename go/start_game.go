@@ -22,7 +22,7 @@ func (f *StartGameForm) Validate() error {
 	return nil
 }
 
-func (g *Game) formForNotStarted() Form {
+func (g *gameImpl) formForNotStarted() Form {
 	return &StartGameForm{
 		UBoatType: SelectFormField[UBoatType]{
 			Options: []UBoatType{
@@ -82,7 +82,7 @@ func (e CrewQualitySetEvent) String() string {
 	return fmt.Sprintf("Crew quality set: %s", e.CrewQuality)
 }
 
-func (g *Game) advanceFromNotStarted(form Form) error {
+func (g *gameImpl) advanceFromNotStarted(form Form) error {
 	startGameForm, ok := form.(*StartGameForm)
 	if !ok {
 		return fmt.Errorf("%w: expected *StartGameForm, got %T", ErrUnexpectedForm, form)
@@ -90,28 +90,28 @@ func (g *Game) advanceFromNotStarted(form Form) error {
 	if err := startGameForm.Validate(); err != nil {
 		return err
 	}
-	g.kmdtName = string(startGameForm.KmdtName)
-	g.writeEvent(KmdtNamedEvent{KmdtName: g.kmdtName})
+	g.KmdtName = string(startGameForm.KmdtName)
+	g.writeEvent(KmdtNamedEvent{KmdtName: g.KmdtName})
 	uboatType := startGameForm.UBoatType.Options[startGameForm.UBoatType.Selected]
 	g.UBoat = NewUBoat(uboatType, string(startGameForm.UBoatID))
 	g.writeEvent(UBoatTypeSelectedEvent{UBoatType: uboatType})
-	g.startPatrolDate = uboatType.FirstPatrolDate()
-	g.writeEvent(FirstPatrolDateSetEvent{FirstPatrolDate: g.startPatrolDate, UBoatType: uboatType})
-	rankD6 := g.Roller.RollD6()
+	g.StartPatrolDate = uboatType.FirstPatrolDate()
+	g.writeEvent(FirstPatrolDateSetEvent{FirstPatrolDate: g.StartPatrolDate, UBoatType: uboatType})
+	rankD6 := g.Options.Roller.RollD6()
 	var rankThreshold ResultD6
-	if g.startPatrolDate.Year() <= 1943 {
+	if g.StartPatrolDate.Year() <= 1943 {
 		rankThreshold = 4
 	} else {
 		rankThreshold = 5
 	}
 	if rankD6 <= rankThreshold {
-		g.kmdtRank = RankOltzS
+		g.KmdtRank = RankOltzS
 	} else {
-		g.kmdtRank = RankKptLt
+		g.KmdtRank = RankKptLt
 	}
-	g.writeEvent(StartingRankSetEvent{D6: rankD6, Rank: g.kmdtRank, PatrolDate: g.startPatrolDate})
-	g.crewQuality = CrewQualityTrained
-	g.writeEvent(CrewQualitySetEvent{CrewQuality: g.crewQuality})
+	g.writeEvent(StartingRankSetEvent{D6: rankD6, Rank: g.KmdtRank, PatrolDate: g.StartPatrolDate})
+	g.CrewQuality = CrewQualityTrained
+	g.writeEvent(CrewQualitySetEvent{CrewQuality: g.CrewQuality})
 	g.setGameState(GameStateSelectLoadout)
 	return nil
 }

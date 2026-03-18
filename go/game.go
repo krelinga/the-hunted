@@ -5,46 +5,77 @@ import (
 	"fmt"
 )
 
-type Game struct {
+type GameView interface {
+	GetKmdtName() string
+	GetKmdtRank() Rank
+	GetCrewQuality() CrewQuality
+	GetUBoat() UBoatView
+	GetPatrols() PatrolsView
+}
+
+type GameData struct {
+	KmdtName    string
+	KmdtRank    Rank
+	CrewQuality CrewQuality
+	UBoat       *UBoatData
+	Patrols     PatrolsData
+	// TODO: rename to NextPatrolDate.
+	StartPatrolDate PatrolDate
+}
+
+func (g *GameData) GetKmdtName() string {
+	return g.KmdtName
+}
+
+func (g *GameData) GetKmdtRank() Rank {
+	return g.KmdtRank
+}
+
+func (g *GameData) GetCrewQuality() CrewQuality {
+	return g.CrewQuality
+}
+
+func (g *GameData) GetUBoat() UBoatView {
+	return g.UBoat
+}
+
+func (g *GameData) GetPatrols() PatrolsView {
+	return g.Patrols
+}
+
+func (g *GameData) GetStartPatrolDate() PatrolDate {
+	return g.StartPatrolDate
+}
+
+type GameOptions struct {
 	Roller      Roller
 	EventWriter EventWriter
 	Driver      Driver
-
-	UBoat   UBoat
-	Patrols []Patrol
-
-	kmdtName        string
-	kmdtRank        Rank
-	crewQuality     CrewQuality
-	gameState       GameState
-	startPatrolDate PatrolDate
 }
 
-func (g *Game) writeEvent(event Event) {
-	if g.EventWriter != nil {
-		g.EventWriter.WriteEvent(event)
+type Game interface {
+	GameView
+
+	Form() Form
+	Advance(form Form) error
+	IsFinished() bool
+}
+
+type gameImpl struct {
+	GameData
+	Options   GameOptions
+	gameState GameState
+}
+
+func (g *gameImpl) writeEvent(event Event) {
+	if g.Options.EventWriter != nil {
+		g.Options.EventWriter.WriteEvent(event)
 	}
 }
 
-func (g *Game) setGameState(gameState GameState) {
+func (g *gameImpl) setGameState(gameState GameState) {
 	g.gameState = gameState
 	g.writeEvent(GameStateSetEvent{GameState: g.gameState})
-}
-
-func (g *Game) KmdtName() string {
-	return g.kmdtName
-}
-
-func (g *Game) KmdtRank() Rank {
-	return g.kmdtRank
-}
-
-func (g *Game) CrewQuality() CrewQuality {
-	return g.crewQuality
-}
-
-func (g *Game) GameState() GameState {
-	return g.gameState
 }
 
 type GameState int
@@ -70,7 +101,7 @@ func (gs GameState) String() string {
 
 var ErrUnexpectedForm = errors.New("unexpected form")
 
-func (g *Game) Form() Form {
+func (g *gameImpl) Form() Form {
 	switch g.gameState {
 	case GameStateNotStarted:
 		return g.formForNotStarted()
@@ -81,7 +112,7 @@ func (g *Game) Form() Form {
 	}
 }
 
-func (g *Game) Advance(form Form) error {
+func (g *gameImpl) Advance(form Form) error {
 	switch g.gameState {
 	case GameStateNotStarted:
 		return g.advanceFromNotStarted(form)
@@ -92,7 +123,7 @@ func (g *Game) Advance(form Form) error {
 	}
 }
 
-func (g *Game) IsFinished() bool {
+func (g *gameImpl) IsFinished() bool {
 	return g.gameState == GameStateFinished
 }
 
@@ -103,4 +134,10 @@ type GameStateSetEvent struct {
 
 func (e GameStateSetEvent) String() string {
 	return fmt.Sprintf("Game state set: %s", e.GameState)
+}
+
+func NewGame(options GameOptions) Game {
+	return &gameImpl{
+		Options: options,
+	}
 }

@@ -3,8 +3,11 @@ package thehunted
 import (
 	"errors"
 	"fmt"
+	"iter"
 	"slices"
 	"strings"
+
+	"github.com/krelinga/the-hunted/go/views"
 )
 
 type PatrolDate int
@@ -199,13 +202,13 @@ type PatrolAssignment struct {
 	AbwehrAgent bool
 }
 
-func (g *Game) startPatrol() {
+func (g *gameImpl) startPatrol() {
 	// TODO: handle minelaying missions.
 	var wolfpack, abwehrAgent bool
-	result := g.Roller.Roll2D6()
+	result := g.Options.Roller.Roll2D6()
 	var spot PatrolSpot
 	switch {
-	case g.startPatrolDate <= PatrolDateDec43:
+	case g.StartPatrolDate <= PatrolDateDec43:
 		switch result.AsInt() {
 		case 2, 5:
 			spot = PatrolSpotIndianOcean
@@ -249,17 +252,54 @@ func (g *Game) startPatrol() {
 		PatrolAssignment: assignment,
 		Result2D6:        result,
 		UBoatType:        g.UBoat.UBoatType,
-		PatrolDate:       g.startPatrolDate,
+		PatrolDate:       g.StartPatrolDate,
 	})
-	g.Patrols = append(g.Patrols, Patrol{
+	g.Patrols = append(g.Patrols, &PatrolData{
 		PatrolAssignment: assignment,
-		PatrolDate:       g.startPatrolDate,
+		PatrolDate:       g.StartPatrolDate,
 	})
 	// TODO: implement more.
 	g.setGameState(GameStateFinished)
 }
 
-type Patrol struct {
+type PatrolView interface {
+	GetPatrolAssignment() PatrolAssignment
+	GetPatrolDate() PatrolDate
+}
+
+type PatrolData struct {
 	PatrolAssignment PatrolAssignment
 	PatrolDate       PatrolDate
+}
+
+func patrolData2View(p *PatrolData) PatrolView {
+	return p
+}
+
+func (p *PatrolData) GetPatrolAssignment() PatrolAssignment {
+	return p.PatrolAssignment
+}
+
+func (p *PatrolData) GetPatrolDate() PatrolDate {
+	return p.PatrolDate
+}
+
+type PatrolsView = views.Slice[PatrolView]
+
+type PatrolsData []*PatrolData
+
+func (p PatrolsData) Get(index int) PatrolView {
+	return views.SliceGetFunc(p, index, patrolData2View)
+}
+
+func (p PatrolsData) All() iter.Seq2[int, PatrolView] {
+	return views.SliceAllFunc(p, patrolData2View)
+}
+
+func (p PatrolsData) Values() iter.Seq[PatrolView] {
+	return views.SliceValuesFunc(p, patrolData2View)
+}
+
+func (p PatrolsData) Len() int {
+	return views.SliceLen(p)
 }

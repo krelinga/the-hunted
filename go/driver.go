@@ -1,7 +1,7 @@
 package thehunted
 
 type Driver interface {
-	StartGame(g *Game) *StartGameResult
-	SelectLoadout(g *Game) *SelectLoadoutResult
-	SelectDefensivePosture(g *Game) *SelectDefensivePostureResult
+	StartGame(g GameView) *StartGameResult
+	SelectLoadout(g GameView) *SelectLoadoutResult
+	SelectDefensivePosture(g GameView) *SelectDefensivePostureResult
 }

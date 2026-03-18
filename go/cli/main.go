@@ -9,15 +9,15 @@ import (
 
 type EventWriterPrinter struct {}
 
-func (e EventWriterPrinter) WriteEvent(event thehunted.Event) {
+func (_ EventWriterPrinter) WriteEvent(event thehunted.Event) {
 	fmt.Printf("event: %s\n", event)
 }
 
 func main() {
-	g := thehunted.Game{
+	g := thehunted.NewGame(thehunted.GameOptions{
 		Roller:      thehunted.RandomRoller{},
 		EventWriter: EventWriterPrinter{},
-	}
+	})
 	for !g.IsFinished() {
 		f := g.Form()
 		var err error
