@@ -147,3 +147,21 @@ func NewGame(options GameOptions) Game {
 		Options: options,
 	}
 }
+
+type gameState int
+
+const (
+	gameStatePause gameState = iota
+	gameStateStart
+	gameStateSelectLoadout
+	gameStateStartPatrol
+	gameStateDone
+)
+
+type handler func(g *gameImpl) (gameState, error)
+
+var allHandlers = map[gameState]handler{
+	gameStateStart:       handleStart,
+	gameStateSelectLoadout: handleSelectLoadout,
+	gameStateStartPatrol: handleStartPatrol,
+}

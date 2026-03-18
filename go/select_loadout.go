@@ -159,3 +159,7 @@ func (g *gameImpl) advanceFromSelectLoadout(form Form) error {
 	g.startPatrol()
 	return nil
 }
+
+func handleSelectLoadout(g *gameImpl) (gameState, error) {
+	return gameStateDone, nil // TODO
+}

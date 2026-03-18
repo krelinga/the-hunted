@@ -262,6 +262,10 @@ func (g *gameImpl) startPatrol() {
 	g.setGameState(GameStateFinished)
 }
 
+func handleStartPatrol(g *gameImpl) (gameState, error) {
+	return gameStateDone, nil // TODO
+}
+
 type PatrolView interface {
 	GetPatrolAssignment() PatrolAssignment
 	GetPatrolDate() PatrolDate

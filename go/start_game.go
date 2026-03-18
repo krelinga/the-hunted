@@ -115,3 +115,7 @@ func (g *gameImpl) advanceFromNotStarted(form Form) error {
 	g.setGameState(GameStateSelectLoadout)
 	return nil
 }
+
+func handleStart(g *gameImpl) (gameState, error) {
+	return gameStateDone, nil // TODO
+}
