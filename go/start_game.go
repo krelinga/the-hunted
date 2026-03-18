@@ -116,6 +116,6 @@ func (g *gameImpl) advanceFromNotStarted(form Form) error {
 	return nil
 }
 
-func handleStart(g *gameImpl) (gameState, error) {
+func handleStart(g *gameImpl, s Selector) (gameState, error) {
 	return gameStateDone, nil // TODO
 }

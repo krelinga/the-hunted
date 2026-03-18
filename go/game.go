@@ -58,7 +58,8 @@ type Game interface {
 
 	Form() Form
 	Advance(form Form) error
-	IsFinished() bool
+	Next(s Selector) error
+	Done() bool
 }
 
 type gameImpl struct {
@@ -124,20 +125,21 @@ func (g *gameImpl) Advance(form Form) error {
 	}
 }
 
-func (g *gameImpl) Run() error {
-	for !g.IsFinished() {
-		newState, err := allHandlers[g.nextState](g)
-		if err != nil {
-			return err
-		}
-		if newState == gameStatePause {
-			return nil
-		}
+var ErrGameAlreadyDone = errors.New("game is already finished")
+
+func (g *gameImpl) Next(s Selector) error {
+	if g.Done() {
+		return ErrGameAlreadyDone
 	}
+	newState, err := allHandlers[g.nextState](g, s)
+	if err != nil {
+		return err
+	}
+	g.nextState = newState
 	return nil
 }
 
-func (g *gameImpl) IsFinished() bool {
+func (g *gameImpl) Done() bool {
 	return g.gameState == GameStateFinished
 }
 
@@ -165,14 +167,13 @@ func NewGame(options GameOptions) Game {
 type gameState int
 
 const (
-	gameStatePause gameState = iota
-	gameStateStart
+	gameStateStart gameState = iota
 	gameStateSelectLoadout
 	gameStateStartPatrol
 	gameStateDone
 )
 
-type handler func(g *gameImpl) (gameState, error)
+type handler func(g *gameImpl, s Selector) (gameState, error)
 
 var allHandlers = map[gameState]handler{
 	gameStateStart:         handleStart,

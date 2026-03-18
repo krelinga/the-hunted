@@ -160,6 +160,6 @@ func (g *gameImpl) advanceFromSelectLoadout(form Form) error {
 	return nil
 }
 
-func handleSelectLoadout(g *gameImpl) (gameState, error) {
+func handleSelectLoadout(g *gameImpl, s Selector) (gameState, error) {
 	return gameStateDone, nil // TODO
 }

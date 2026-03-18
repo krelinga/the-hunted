@@ -17,7 +17,7 @@ func main() {
 	g := thehunted.NewGame(thehunted.GameOptions{
 		EventWriter: EventWriterPrinter{},
 	})
-	for !g.IsFinished() {
+	for !g.Done() {
 		f := g.Form()
 		var err error
 		switch f := f.(type) {

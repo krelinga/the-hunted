@@ -262,7 +262,7 @@ func (g *gameImpl) startPatrol() {
 	g.setGameState(GameStateFinished)
 }
 
-func handleStartPatrol(g *gameImpl) (gameState, error) {
+func handleStartPatrol(g *gameImpl, s Selector) (gameState, error) {
 	return gameStateDone, nil // TODO
 }
 
