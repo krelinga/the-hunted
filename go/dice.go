@@ -6,42 +6,42 @@ import (
 	"math/rand"
 )
 
-type ResultD6 int
+type DiceD6 int
 
-func (d ResultD6) String() string {
+func (d DiceD6) String() string {
 	if err := d.Validate(); err != nil {
 		return fmt.Sprintf("Invalid D6 (%d)", d)
 	}
 	return fmt.Sprintf("%d", d)
 }
 
-var ErrInvalidResult = errors.New("invalid Result")
+var ErrInvalidDice = errors.New("invalid Dice value")
 
-func (d ResultD6) Validate() error {
+func (d DiceD6) Validate() error {
 	if d < 1 || d > 6 {
-		return fmt.Errorf("%w: die value %d is out of range (1-6)", ErrInvalidResult, d)
+		return fmt.Errorf("%w: die value %d is out of range (1-6)", ErrInvalidDice, d)
 	}
 	return nil
 }
 
-func (d ResultD6) Must() {
+func (d DiceD6) Must() {
 	if err := d.Validate(); err != nil {
 		panic(err)
 	}
 }
 
-func (d ResultD6) AsInt() int {
+func (d DiceD6) AsInt() int {
 	d.Must()
 	return int(d)
 }
 
 type Result2D6 struct {
-	Die1 ResultD6
-	Die2 ResultD6
+	Die1 DiceD6
+	Die2 DiceD6
 }
 
 func (r Result2D6) String() string {
-	return fmt.Sprintf("%s + %s", r.Die1, r.Die2)
+	return fmt.Sprintf("%s + %s = %d", r.Die1, r.Die2, r.AsInt())
 }
 
 func (r Result2D6) Validate() error {
@@ -66,14 +66,14 @@ func (r Result2D6) AsInt() int {
 }
 
 type Roller interface {
-	RollD6() ResultD6
+	RollD6() DiceD6
 	Roll2D6() Result2D6
 }
 
 type RandomRoller struct{}
 
-func (r RandomRoller) RollD6() ResultD6 {
-	return ResultD6(rand.Intn(6) + 1)
+func (r RandomRoller) RollD6() DiceD6 {
+	return DiceD6(rand.Intn(6) + 1)
 }
 
 func (r RandomRoller) Roll2D6() Result2D6 {
