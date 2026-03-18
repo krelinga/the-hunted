@@ -13,3 +13,7 @@ func (_ baseEvent) eventIsAClosedType() {}
 type EventWriter interface {
 	WriteEvent(Event)
 }
+
+type NilEventWriter struct {}
+
+func (_ NilEventWriter) WriteEvent(_ Event) {}

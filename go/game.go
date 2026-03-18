@@ -137,6 +137,12 @@ func (e GameStateSetEvent) String() string {
 }
 
 func NewGame(options GameOptions) Game {
+	if options.Roller == nil {
+		options.Roller = RandomRoller{}
+	}
+	if options.EventWriter == nil {
+		options.EventWriter = NilEventWriter{}
+	}
 	return &gameImpl{
 		Options: options,
 	}

@@ -7,7 +7,7 @@ import (
 	thehunted "github.com/krelinga/the-hunted/go"
 )
 
-type EventWriterPrinter struct {}
+type EventWriterPrinter struct{}
 
 func (_ EventWriterPrinter) WriteEvent(event thehunted.Event) {
 	fmt.Printf("event: %s\n", event)
@@ -15,7 +15,6 @@ func (_ EventWriterPrinter) WriteEvent(event thehunted.Event) {
 
 func main() {
 	g := thehunted.NewGame(thehunted.GameOptions{
-		Roller:      thehunted.RandomRoller{},
 		EventWriter: EventWriterPrinter{},
 	})
 	for !g.IsFinished() {
