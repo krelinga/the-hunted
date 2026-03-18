@@ -374,7 +374,7 @@ func (u *UBoatData) GetDeckGunAmmo() int {
 	return u.DeckGunAmmo
 }
 
-func NewUBoat(uBoatType UBoatType, id string) *UBoatData {
+func NewUBoatData(uBoatType UBoatType, id string) *UBoatData {
 	ub := &UBoatData{
 		UBoatType:   uBoatType,
 		ID:          id,

@@ -93,7 +93,7 @@ func (g *gameImpl) advanceFromNotStarted(form Form) error {
 	g.KmdtName = string(startGameForm.KmdtName)
 	g.writeEvent(KmdtNamedEvent{KmdtName: g.KmdtName})
 	uboatType := startGameForm.UBoatType.Options[startGameForm.UBoatType.Selected]
-	g.UBoat = NewUBoat(uboatType, string(startGameForm.UBoatID))
+	g.UBoat = NewUBoatData(uboatType, string(startGameForm.UBoatID))
 	g.writeEvent(UBoatTypeSelectedEvent{UBoatType: uboatType})
 	g.StartPatrolDate = uboatType.FirstPatrolDate()
 	g.writeEvent(FirstPatrolDateSetEvent{FirstPatrolDate: g.StartPatrolDate, UBoatType: uboatType})
