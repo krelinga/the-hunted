@@ -36,19 +36,19 @@ func (d DiceD6) AsInt() int {
 }
 
 type Result2D6 struct {
-	Die1 DiceD6
-	Die2 DiceD6
+	Dice1 DiceD6
+	Dice2 DiceD6
 }
 
 func (r Result2D6) String() string {
-	return fmt.Sprintf("%s + %s = %d", r.Die1, r.Die2, r.AsInt())
+	return fmt.Sprintf("%s + %s = %d", r.Dice1, r.Dice2, r.AsInt())
 }
 
 func (r Result2D6) Validate() error {
-	if err := r.Die1.Validate(); err != nil {
+	if err := r.Dice1.Validate(); err != nil {
 		return fmt.Errorf("invalid first die: %w", err)
 	}
-	if err := r.Die2.Validate(); err != nil {
+	if err := r.Dice2.Validate(); err != nil {
 		return fmt.Errorf("invalid second die: %w", err)
 	}
 	return nil
@@ -62,7 +62,7 @@ func (r Result2D6) Must() {
 
 func (r Result2D6) AsInt() int {
 	r.Must()
-	return r.Die1.AsInt() + r.Die2.AsInt()
+	return r.Dice1.AsInt() + r.Dice2.AsInt()
 }
 
 type Roller interface {
@@ -78,7 +78,7 @@ func (r RandomRoller) RollD6() DiceD6 {
 
 func (r RandomRoller) Roll2D6() Result2D6 {
 	return Result2D6{
-		Die1: r.RollD6(),
-		Die2: r.RollD6(),
+		Dice1: r.RollD6(),
+		Dice2: r.RollD6(),
 	}
 }
