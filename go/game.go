@@ -65,6 +65,7 @@ type gameImpl struct {
 	GameData
 	Options   GameOptions
 	gameState GameState
+	nextState gameState
 }
 
 func (g *gameImpl) writeEvent(event Event) {
@@ -123,6 +124,19 @@ func (g *gameImpl) Advance(form Form) error {
 	}
 }
 
+func (g *gameImpl) Run() error {
+	for !g.IsFinished() {
+		newState, err := allHandlers[g.nextState](g)
+		if err != nil {
+			return err
+		}
+		if newState == gameStatePause {
+			return nil
+		}
+	}
+	return nil
+}
+
 func (g *gameImpl) IsFinished() bool {
 	return g.gameState == GameStateFinished
 }
@@ -161,7 +175,7 @@ const (
 type handler func(g *gameImpl) (gameState, error)
 
 var allHandlers = map[gameState]handler{
-	gameStateStart:       handleStart,
+	gameStateStart:         handleStart,
 	gameStateSelectLoadout: handleSelectLoadout,
-	gameStateStartPatrol: handleStartPatrol,
+	gameStateStartPatrol:   handleStartPatrol,
 }
