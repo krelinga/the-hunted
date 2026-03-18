@@ -125,11 +125,9 @@ func (g *gameImpl) Advance(form Form) error {
 	}
 }
 
-var ErrGameAlreadyDone = errors.New("game is already finished")
-
 func (g *gameImpl) Next(s Selector) error {
 	if g.Done() {
-		return ErrGameAlreadyDone
+		panic("game is already done")
 	}
 	newState, err := allHandlers[g.nextState](g, s)
 	if err != nil {
