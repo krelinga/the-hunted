@@ -9,10 +9,10 @@ type StartGameForm struct {
 	KmdtName  TextFormField
 }
 
-type StartGameResult struct {
-	UBoatType   UBoatType
-	UBoatID     string
-	KmdtName    string
+type SelectedStart struct {
+	UBoatType UBoatType
+	UBoatID   string
+	KmdtName  string
 }
 
 func (f *StartGameForm) Validate() error {

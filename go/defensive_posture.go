@@ -40,6 +40,6 @@ func (dp DefensivePosture) Must() {
 	}
 }
 
-type SelectDefensivePostureResult struct {
+type SelectedDefensivePosture struct {
 	DefensivePosture DefensivePosture
 }

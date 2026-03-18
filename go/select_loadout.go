@@ -13,7 +13,7 @@ type SelectLoadoutForm struct {
 	Layout  LayoutFormField[TorpLoc, TorpType]
 }
 
-type SelectLoadoutResult struct {
+type SelectedLoadout struct {
 	Layout map[TorpLoc]TorpCountsData
 }
 

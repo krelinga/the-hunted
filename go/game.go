@@ -50,7 +50,7 @@ func (g *GameData) GetStartPatrolDate() PatrolDate {
 type GameOptions struct {
 	Roller      Roller
 	EventWriter EventWriter
-	Driver      Driver
+	Driver      Selector
 }
 
 type Game interface {
