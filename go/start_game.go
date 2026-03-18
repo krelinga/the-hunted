@@ -9,6 +9,12 @@ type StartGameForm struct {
 	KmdtName  TextFormField
 }
 
+type StartGameResult struct {
+	UBoatType   UBoatType
+	UBoatID     string
+	KmdtName    string
+}
+
 func (f *StartGameForm) Validate() error {
 	if err := f.UBoatType.Validate(); err != nil {
 		return fmt.Errorf("%w: invalid u-boat type", err)

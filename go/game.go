@@ -8,6 +8,7 @@ import (
 type Game struct {
 	Roller      Roller
 	EventWriter EventWriter
+	Driver      Driver
 
 	UBoat   UBoat
 	Patrols []Patrol

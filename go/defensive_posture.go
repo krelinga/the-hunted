@@ -40,11 +40,6 @@ func (dp DefensivePosture) Must() {
 	}
 }
 
-type SelectDefensivePostureForm struct {
-	baseForm
+type SelectDefensivePostureResult struct {
 	DefensivePosture DefensivePosture
-}
-
-func (f *SelectDefensivePostureForm) Validate() error {
-	return f.DefensivePosture.Validate()
 }

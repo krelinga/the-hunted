@@ -13,6 +13,10 @@ type SelectLoadoutForm struct {
 	Layout  LayoutFormField[TorpLoc, TorpType]
 }
 
+type SelectLoadoutResult struct {
+	Layout map[TorpLoc]Loadout
+}
+
 func (f *SelectLoadoutForm) Validate() error {
 	if err := f.Overall.Validate(); err != nil {
 		return fmt.Errorf("%w: invalid loadout selection", err)
