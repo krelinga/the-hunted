@@ -39,16 +39,25 @@ type KmdtNamedEvent struct {
 	KmdtName string
 }
 
+func (e KmdtNamedEvent) apply(gd *GameData) {
+	gd.KmdtName = e.KmdtName
+}
+
 func (e KmdtNamedEvent) String() string {
 	return fmt.Sprintf("Kommandant named: %s", e.KmdtName)
 }
 
-type UBoatTypeSelectedEvent struct {
+type NewUBoatEvent struct {
 	baseEvent
 	UBoatType UBoatType
+	UBoatID   string
 }
 
-func (e UBoatTypeSelectedEvent) String() string {
+func (e NewUBoatEvent) apply(gd *GameData) {
+	gd.UBoat = NewUBoatData(e.UBoatType, e.UBoatID)
+}
+
+func (e NewUBoatEvent) String() string {
 	return fmt.Sprintf("U-boat type selected: %s", e.UBoatType)
 }
 
@@ -56,6 +65,10 @@ type FirstPatrolDateSetEvent struct {
 	baseEvent
 	FirstPatrolDate PatrolDate
 	UBoatType       UBoatType
+}
+
+func (e FirstPatrolDateSetEvent) apply(gd *GameData) {
+	gd.StartPatrolDate = e.FirstPatrolDate
 }
 
 func (e FirstPatrolDateSetEvent) String() string {
@@ -69,6 +82,10 @@ type StartingRankSetEvent struct {
 	PatrolDate PatrolDate
 }
 
+func (e StartingRankSetEvent) apply(gd *GameData) {
+	gd.KmdtRank = e.Rank
+}
+
 func (e StartingRankSetEvent) String() string {
 	return fmt.Sprintf("Starting rank set: %s (based on d6 roll %s and patrol date %s)", e.Rank, e.D6, e.PatrolDate)
 }
@@ -76,6 +93,10 @@ func (e StartingRankSetEvent) String() string {
 type CrewQualitySetEvent struct {
 	baseEvent
 	CrewQuality CrewQuality
+}
+
+func (e CrewQualitySetEvent) apply(gd *GameData) {
+	gd.CrewQuality = e.CrewQuality
 }
 
 func (e CrewQualitySetEvent) String() string {
@@ -94,7 +115,7 @@ func (g *gameImpl) advanceFromNotStarted(form Form) error {
 	g.eventWriter.WriteEvent(KmdtNamedEvent{KmdtName: g.KmdtName})
 	uboatType := startGameForm.UBoatType.Options[startGameForm.UBoatType.Selected]
 	g.UBoat = NewUBoatData(uboatType, string(startGameForm.UBoatID))
-	g.eventWriter.WriteEvent(UBoatTypeSelectedEvent{UBoatType: uboatType})
+	g.eventWriter.WriteEvent(NewUBoatEvent{UBoatType: uboatType, UBoatID: string(startGameForm.UBoatID)})
 	g.StartPatrolDate = uboatType.FirstPatrolDate()
 	g.eventWriter.WriteEvent(FirstPatrolDateSetEvent{FirstPatrolDate: g.StartPatrolDate, UBoatType: uboatType})
 	rankD6 := g.roller.RollD6()
@@ -116,6 +137,6 @@ func (g *gameImpl) advanceFromNotStarted(form Form) error {
 	return nil
 }
 
-func handleStart(g *gameImpl) (gameState, error) {
+func handleStart(g gameViewApplier) (gameState, error) {
 	return gameStateDone, nil // TODO
 }

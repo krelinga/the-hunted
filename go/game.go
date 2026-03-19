@@ -86,6 +86,11 @@ func (g *gameImpl) SetRoller(roller Roller) Game {
 	return g
 }
 
+func (g *gameImpl) apply(e Event) {
+	e.apply(&g.GameData)
+	g.eventWriter.WriteEvent(e)
+}
+
 func (g *gameImpl) setGameState(gameState GameState) {
 	g.gameState = gameState
 	g.eventWriter.WriteEvent(GameStateSetEvent{GameState: g.gameState})
@@ -157,6 +162,11 @@ type GameStateSetEvent struct {
 	GameState GameState
 }
 
+func (e GameStateSetEvent) apply(gd *GameData) {
+	// No GameData fields are affected by a game state change, so this is a no-op.
+	// TODO: remove this event type eventually.
+}
+
 func (e GameStateSetEvent) String() string {
 	return fmt.Sprintf("Game state set: %s", e.GameState)
 }
@@ -175,7 +185,13 @@ const (
 	gameStateDone
 )
 
-type handler func(g *gameImpl) (gameState, error)
+type gameViewApplier interface {
+	GameView
+
+	apply(Event)
+}
+
+type handler func(g gameViewApplier) (gameState, error)
 
 var allHandlers = map[gameState]handler{
 	gameStateStart:         handleStart,

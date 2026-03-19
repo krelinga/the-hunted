@@ -98,6 +98,12 @@ type LoadoutChangedEvent struct {
 	Loadout TorpCountsData
 }
 
+func (e LoadoutChangedEvent) apply(gd *GameData) {
+	for k, v := range e.Loadout {
+		gd.UBoat.TorpLayout[e.TorpLoc][k] = v
+	}
+}
+
 func (e LoadoutChangedEvent) String() string {
 	types := slices.Collect(maps.Keys(e.Loadout))
 	slices.Sort(types)
@@ -160,6 +166,6 @@ func (g *gameImpl) advanceFromSelectLoadout(form Form) error {
 	return nil
 }
 
-func handleSelectLoadout(g *gameImpl) (gameState, error) {
+func handleSelectLoadout(g gameViewApplier) (gameState, error) {
 	return gameStateDone, nil // TODO
 }

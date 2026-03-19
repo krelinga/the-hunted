@@ -396,20 +396,3 @@ func NewUBoatData(uBoatType UBoatType, id string) *UBoatData {
 	}
 	return ub
 }
-
-type DeckGunRemovedEvent struct {
-	baseEvent
-}
-
-func (e DeckGunRemovedEvent) String() string {
-	return "Deck gun removed"
-}
-
-func (u *UBoatData) RemoveDeckGun() []Event {
-	if !u.HasDeckGun {
-		return nil
-	}
-	u.HasDeckGun = false
-	u.DeckGunAmmo = 0
-	return []Event{DeckGunRemovedEvent{}}
-}

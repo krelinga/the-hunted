@@ -182,6 +182,13 @@ type PatrolAssignmentEvent struct {
 	PatrolDate       PatrolDate
 }
 
+func (e PatrolAssignmentEvent) apply(gd *GameData) {
+	gd.Patrols = append(gd.Patrols, &PatrolData{
+		PatrolAssignment: e.PatrolAssignment,
+		PatrolDate:       e.PatrolDate,
+	})
+}
+
 func (e PatrolAssignmentEvent) String() string {
 	sb := strings.Builder{}
 	sb.WriteString("Patrol assignment: ")
@@ -262,7 +269,7 @@ func (g *gameImpl) startPatrol() {
 	g.setGameState(GameStateFinished)
 }
 
-func handleStartPatrol(g *gameImpl) (gameState, error) {
+func handleStartPatrol(g gameViewApplier) (gameState, error) {
 	return gameStateDone, nil // TODO
 }
 
