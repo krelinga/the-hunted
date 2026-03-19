@@ -15,6 +15,19 @@ type SelectedStart struct {
 	KmdtName  string
 }
 
+func (ss SelectedStart) Validate() error {
+	if err := ss.UBoatType.Validate(); err != nil {
+		return fmt.Errorf("%w: invalid u-boat type", err)
+	}
+	if ss.UBoatID == "" {
+		return fmt.Errorf("%w: u-boat ID cannot be empty", ErrInvalidFormField)
+	}
+	if ss.KmdtName == "" {
+		return fmt.Errorf("%w: kommandant name cannot be empty", ErrInvalidFormField)
+	}
+	return nil
+}
+
 func (f *StartGameForm) Validate() error {
 	if err := f.UBoatType.Validate(); err != nil {
 		return fmt.Errorf("%w: invalid u-boat type", err)
