@@ -14,9 +14,7 @@ func (_ EventWriterPrinter) WriteEvent(event thehunted.Event) {
 }
 
 func main() {
-	g := thehunted.NewGame(thehunted.GameOptions{
-		EventWriter: EventWriterPrinter{},
-	})
+	g := thehunted.NewGame().SetEventWriter(EventWriterPrinter{})
 	for !g.Done() {
 		f := g.Form()
 		var err error

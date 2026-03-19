@@ -151,7 +151,7 @@ func (g *gameImpl) advanceFromSelectLoadout(form Form) error {
 	for _, loc := range locs {
 		loadout := TorpCountsData(selectLoadoutForm.Layout[loc].Items)
 		g.UBoat.TorpLayout[loc] = maps.Clone(loadout)
-		g.writeEvent(LoadoutChangedEvent{
+		g.eventWriter.WriteEvent(LoadoutChangedEvent{
 			TorpLoc: loc,
 			Loadout: maps.Clone(loadout),
 		})
@@ -160,6 +160,6 @@ func (g *gameImpl) advanceFromSelectLoadout(form Form) error {
 	return nil
 }
 
-func handleSelectLoadout(g *gameImpl, s Selector) (gameState, error) {
+func handleSelectLoadout(g *gameImpl) (gameState, error) {
 	return gameStateDone, nil // TODO
 }

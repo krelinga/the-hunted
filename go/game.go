@@ -47,37 +47,48 @@ func (g *GameData) GetStartPatrolDate() PatrolDate {
 	return g.StartPatrolDate
 }
 
-type GameOptions struct {
-	Roller      Roller
-	EventWriter EventWriter
-	Driver      Selector
-}
-
 type Game interface {
 	GameView
 
+	SetSelector(selector Selector) Game
+	SetEventWriter(eventWriter EventWriter) Game
+	SetRoller(roller Roller) Game
+
 	Form() Form
 	Advance(form Form) error
-	Next(s Selector) error
+	Next() error
 	Done() bool
 }
 
 type gameImpl struct {
 	GameData
-	Options   GameOptions
+
+	selector Selector
+	eventWriter EventWriter
+	roller Roller
+
 	gameState GameState
 	nextState gameState
 }
 
-func (g *gameImpl) writeEvent(event Event) {
-	if g.Options.EventWriter != nil {
-		g.Options.EventWriter.WriteEvent(event)
-	}
+func (g *gameImpl) SetSelector(selector Selector) Game {
+	g.selector = selector
+	return g
+}
+
+func (g *gameImpl) SetEventWriter(eventWriter EventWriter) Game {
+	g.eventWriter = eventWriter
+	return g
+}
+
+func (g *gameImpl) SetRoller(roller Roller) Game {
+	g.roller = roller
+	return g
 }
 
 func (g *gameImpl) setGameState(gameState GameState) {
 	g.gameState = gameState
-	g.writeEvent(GameStateSetEvent{GameState: g.gameState})
+	g.eventWriter.WriteEvent(GameStateSetEvent{GameState: g.gameState})
 }
 
 type GameState int
@@ -125,11 +136,11 @@ func (g *gameImpl) Advance(form Form) error {
 	}
 }
 
-func (g *gameImpl) Next(s Selector) error {
+func (g *gameImpl) Next() error {
 	if g.Done() {
 		panic("game is already done")
 	}
-	newState, err := allHandlers[g.nextState](g, s)
+	newState, err := allHandlers[g.nextState](g)
 	if err != nil {
 		return err
 	}
@@ -150,16 +161,9 @@ func (e GameStateSetEvent) String() string {
 	return fmt.Sprintf("Game state set: %s", e.GameState)
 }
 
-func NewGame(options GameOptions) Game {
-	if options.Roller == nil {
-		options.Roller = RandomRoller{}
-	}
-	if options.EventWriter == nil {
-		options.EventWriter = NilEventWriter{}
-	}
-	return &gameImpl{
-		Options: options,
-	}
+func NewGame() Game {
+	gi := &gameImpl{}
+	return gi.SetRoller(RandomRoller{})
 }
 
 type gameState int
@@ -171,7 +175,7 @@ const (
 	gameStateDone
 )
 
-type handler func(g *gameImpl, s Selector) (gameState, error)
+type handler func(g *gameImpl) (gameState, error)
 
 var allHandlers = map[gameState]handler{
 	gameStateStart:         handleStart,

@@ -205,7 +205,7 @@ type PatrolAssignment struct {
 func (g *gameImpl) startPatrol() {
 	// TODO: handle minelaying missions.
 	var wolfpack, abwehrAgent bool
-	result := g.Options.Roller.Roll2D6()
+	result := g.roller.Roll2D6()
 	var spot PatrolSpot
 	switch {
 	case g.StartPatrolDate <= PatrolDateDec43:
@@ -248,7 +248,7 @@ func (g *gameImpl) startPatrol() {
 		Wolfpack:    wolfpack,
 		AbwehrAgent: abwehrAgent,
 	}
-	g.writeEvent(PatrolAssignmentEvent{
+	g.eventWriter.WriteEvent(PatrolAssignmentEvent{
 		PatrolAssignment: assignment,
 		Result2D6:        result,
 		UBoatType:        g.UBoat.UBoatType,
@@ -262,7 +262,7 @@ func (g *gameImpl) startPatrol() {
 	g.setGameState(GameStateFinished)
 }
 
-func handleStartPatrol(g *gameImpl, s Selector) (gameState, error) {
+func handleStartPatrol(g *gameImpl) (gameState, error) {
 	return gameStateDone, nil // TODO
 }
 

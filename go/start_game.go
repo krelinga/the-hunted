@@ -91,13 +91,13 @@ func (g *gameImpl) advanceFromNotStarted(form Form) error {
 		return err
 	}
 	g.KmdtName = string(startGameForm.KmdtName)
-	g.writeEvent(KmdtNamedEvent{KmdtName: g.KmdtName})
+	g.eventWriter.WriteEvent(KmdtNamedEvent{KmdtName: g.KmdtName})
 	uboatType := startGameForm.UBoatType.Options[startGameForm.UBoatType.Selected]
 	g.UBoat = NewUBoatData(uboatType, string(startGameForm.UBoatID))
-	g.writeEvent(UBoatTypeSelectedEvent{UBoatType: uboatType})
+	g.eventWriter.WriteEvent(UBoatTypeSelectedEvent{UBoatType: uboatType})
 	g.StartPatrolDate = uboatType.FirstPatrolDate()
-	g.writeEvent(FirstPatrolDateSetEvent{FirstPatrolDate: g.StartPatrolDate, UBoatType: uboatType})
-	rankD6 := g.Options.Roller.RollD6()
+	g.eventWriter.WriteEvent(FirstPatrolDateSetEvent{FirstPatrolDate: g.StartPatrolDate, UBoatType: uboatType})
+	rankD6 := g.roller.RollD6()
 	var rankThreshold DiceD6
 	if g.StartPatrolDate.Year() <= 1943 {
 		rankThreshold = 4
@@ -109,13 +109,13 @@ func (g *gameImpl) advanceFromNotStarted(form Form) error {
 	} else {
 		g.KmdtRank = RankKptLt
 	}
-	g.writeEvent(StartingRankSetEvent{D6: rankD6, Rank: g.KmdtRank, PatrolDate: g.StartPatrolDate})
+	g.eventWriter.WriteEvent(StartingRankSetEvent{D6: rankD6, Rank: g.KmdtRank, PatrolDate: g.StartPatrolDate})
 	g.CrewQuality = CrewQualityTrained
-	g.writeEvent(CrewQualitySetEvent{CrewQuality: g.CrewQuality})
+	g.eventWriter.WriteEvent(CrewQualitySetEvent{CrewQuality: g.CrewQuality})
 	g.setGameState(GameStateSelectLoadout)
 	return nil
 }
 
-func handleStart(g *gameImpl, s Selector) (gameState, error) {
+func handleStart(g *gameImpl) (gameState, error) {
 	return gameStateDone, nil // TODO
 }
