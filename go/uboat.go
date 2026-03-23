@@ -3,11 +3,10 @@ package thehunted
 import (
 	"errors"
 	"fmt"
-	"iter"
 	"slices"
 	"strings"
 
-	"github.com/krelinga/the-hunted/go/views"
+	"github.com/krelinga/the-hunted/go/views2"
 )
 
 type UBoatType int
@@ -177,30 +176,26 @@ func (u UBoatType) HasDeckGun() bool {
 }
 
 type TorpCountsView interface {
-	views.Map[TorpType, int]
+	views2.Map[TorpType, int]
 	String() string
+	Total() int
 }
 
 type TorpCountsData map[TorpType]int
 
-func (d TorpCountsData) Get(key TorpType) (int, bool) {
-	return views.MapGet(d, key)
+func (d TorpCountsData) Total() int {
+	total := 0
+	for _, count := range d {
+		total += count
+	}
+	return total
 }
 
-func (d TorpCountsData) All() iter.Seq2[TorpType, int] {
-	return views.MapAll(d)
-}
-
-func (d TorpCountsData) Keys() iter.Seq[TorpType] {
-	return views.MapKeys(d)
-}
-
-func (d TorpCountsData) Values() iter.Seq[int] {
-	return views.MapValues(d)
-}
-
-func (d TorpCountsData) Len() int {
-	return views.MapLen(d)
+func (d TorpCountsData) View() TorpCountsView {
+	return torpCountsViewImpl{
+		Map:  views2.WrapMap(d),
+		data: d,
+	}
 }
 
 func (d TorpCountsData) String() string {
@@ -214,32 +209,48 @@ func (d TorpCountsData) String() string {
 	return fmt.Sprintf("[%s]", strings.Join(parts, ", "))
 }
 
-type TorpLayoutView = views.Map[TorpLoc, TorpCountsView]
+type torpCountsViewImpl struct {
+	views2.Map[TorpType, int]
+	data TorpCountsData
+}
+
+func (v torpCountsViewImpl) Total() int {
+	return v.data.Total()
+}
+
+func (v torpCountsViewImpl) String() string {
+	return v.data.String()
+}
+
+type TorpLayoutView interface {
+	views2.Map[TorpLoc, TorpCountsView]
+	Total() int
+}
 
 type TorpLayoutData map[TorpLoc]TorpCountsData
 
-func torpCountsData2View(x TorpCountsData) TorpCountsView {
-	return x
+func (d TorpLayoutData) Total() int {
+	total := 0
+	for _, counts := range d {
+		total += counts.Total()
+	}
+	return total
 }
 
-func (d TorpLayoutData) Get(key TorpLoc) (TorpCountsView, bool) {
-	return views.MapGetFunc(d, key, torpCountsData2View)
+func (d TorpLayoutData) View() TorpLayoutView {
+	return torpLayoutViewImpl{
+		Map:  views2.WrapViewerMap(d),
+		data: d,
+	}
 }
 
-func (d TorpLayoutData) All() iter.Seq2[TorpLoc, TorpCountsView] {
-	return views.MapAllFunc(d, torpCountsData2View)
+type torpLayoutViewImpl struct {
+	views2.Map[TorpLoc, TorpCountsView]
+	data TorpLayoutData
 }
 
-func (d TorpLayoutData) Keys() iter.Seq[TorpLoc] {
-	return views.MapKeys(d)
-}
-
-func (d TorpLayoutData) Values() iter.Seq[TorpCountsView] {
-	return views.MapValuesFunc(d, torpCountsData2View)
-}
-
-func (d TorpLayoutData) Len() int {
-	return views.MapLen(d)
+func (v torpLayoutViewImpl) Total() int {
+	return v.data.Total()
 }
 
 func (u UBoatType) DefaultLoadout(pd PatrolDate) TorpCountsData {
@@ -354,24 +365,32 @@ type UBoatData struct {
 	DeckGunAmmo int
 }
 
-func (u *UBoatData) GetUBoatType() UBoatType {
-	return u.UBoatType
+func (d *UBoatData) View() UBoatView {
+	return uBoatViewImpl{data: d}
 }
 
-func (u *UBoatData) GetID() string {
-	return u.ID
+type uBoatViewImpl struct {
+	data *UBoatData
 }
 
-func (u *UBoatData) GetTorpLayout() TorpLayoutView {
-	return u.TorpLayout
+func (u uBoatViewImpl) GetUBoatType() UBoatType {
+	return u.data.UBoatType
 }
 
-func (u *UBoatData) GetHasDeckGun() bool {
-	return u.HasDeckGun
+func (u uBoatViewImpl) GetID() string {
+	return u.data.ID
 }
 
-func (u *UBoatData) GetDeckGunAmmo() int {
-	return u.DeckGunAmmo
+func (u uBoatViewImpl) GetTorpLayout() TorpLayoutView {
+	return u.data.TorpLayout.View()
+}
+
+func (u uBoatViewImpl) GetHasDeckGun() bool {
+	return u.data.HasDeckGun
+}
+
+func (u uBoatViewImpl) GetDeckGunAmmo() int {
+	return u.data.DeckGunAmmo
 }
 
 func NewUBoatData(uBoatType UBoatType, id string) *UBoatData {

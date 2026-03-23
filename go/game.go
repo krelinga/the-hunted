@@ -3,6 +3,8 @@ package thehunted
 import (
 	"errors"
 	"fmt"
+
+	"github.com/krelinga/the-hunted/go/views2"
 )
 
 type View interface {
@@ -10,7 +12,7 @@ type View interface {
 	GetKmdtRank() Rank
 	GetCrewQuality() CrewQuality
 	GetUBoat() UBoatView
-	GetPatrols() PatrolsView
+	GetPatrols() views2.Slice[PatrolView]
 }
 
 type Data struct {
@@ -18,33 +20,41 @@ type Data struct {
 	KmdtRank    Rank
 	CrewQuality CrewQuality
 	UBoat       *UBoatData
-	Patrols     PatrolsData
+	Patrols     []*PatrolData
 	// TODO: rename to NextPatrolDate.
 	StartPatrolDate PatrolDate
 }
 
-func (g *Data) GetKmdtName() string {
-	return g.KmdtName
+func (d *Data) View() View {
+	return viewImpl{data: d}
 }
 
-func (g *Data) GetKmdtRank() Rank {
-	return g.KmdtRank
+type viewImpl struct {
+	data *Data
 }
 
-func (g *Data) GetCrewQuality() CrewQuality {
-	return g.CrewQuality
+func (v viewImpl) GetKmdtName() string {
+	return v.data.KmdtName
 }
 
-func (g *Data) GetUBoat() UBoatView {
-	return g.UBoat
+func (v viewImpl) GetKmdtRank() Rank {
+	return v.data.KmdtRank
 }
 
-func (g *Data) GetPatrols() PatrolsView {
-	return g.Patrols
+func (v viewImpl) GetCrewQuality() CrewQuality {
+	return v.data.CrewQuality
 }
 
-func (g *Data) GetStartPatrolDate() PatrolDate {
-	return g.StartPatrolDate
+func (v viewImpl) GetUBoat() UBoatView {
+	return v.data.UBoat.View()
+}
+
+func (v viewImpl) GetPatrols() views2.Slice[PatrolView] {
+	return views2.WrapViewerSlice(v.data.Patrols)
+}
+
+func (v viewImpl) GetStartPatrolDate() PatrolDate {
+	return v.data.StartPatrolDate
 }
 
 type Game struct {
@@ -58,7 +68,7 @@ type Game struct {
 }
 
 func (g *Game) GetView() View {
-	return &g.data
+	return g.data.View()
 }
 
 func (g *Game) Form() Form {

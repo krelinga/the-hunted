@@ -3,11 +3,8 @@ package thehunted
 import (
 	"errors"
 	"fmt"
-	"iter"
 	"slices"
 	"strings"
-
-	"github.com/krelinga/the-hunted/go/views"
 )
 
 type PatrolDate int
@@ -283,34 +280,18 @@ type PatrolData struct {
 	PatrolDate       PatrolDate
 }
 
-func patrolData2View(p *PatrolData) PatrolView {
-	return p
+func (p *PatrolData) View() PatrolView {
+	return patrolViewImpl{data: p}
 }
 
-func (p *PatrolData) GetPatrolAssignment() PatrolAssignment {
-	return p.PatrolAssignment
+type patrolViewImpl struct {
+	data *PatrolData
 }
 
-func (p *PatrolData) GetPatrolDate() PatrolDate {
-	return p.PatrolDate
+func (p patrolViewImpl) GetPatrolAssignment() PatrolAssignment {
+	return p.data.PatrolAssignment
 }
 
-type PatrolsView = views.Slice[PatrolView]
-
-type PatrolsData []*PatrolData
-
-func (p PatrolsData) Get(index int) PatrolView {
-	return views.SliceGetFunc(p, index, patrolData2View)
-}
-
-func (p PatrolsData) All() iter.Seq2[int, PatrolView] {
-	return views.SliceAllFunc(p, patrolData2View)
-}
-
-func (p PatrolsData) Values() iter.Seq[PatrolView] {
-	return views.SliceValuesFunc(p, patrolData2View)
-}
-
-func (p PatrolsData) Len() int {
-	return views.SliceLen(p)
+func (p patrolViewImpl) GetPatrolDate() PatrolDate {
+	return p.data.PatrolDate
 }
