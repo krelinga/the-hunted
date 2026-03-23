@@ -17,6 +17,37 @@ type SelectedLoadout struct {
 	Layout map[TorpLoc]TorpCountsData
 }
 
+func (s *SelectedLoadout) Validate(g View) error {
+	for torpLoc, torpCounts := range s.Layout {
+		if !g.GetUBoat().GetUBoatType().HasTorpLoc(torpLoc) {
+			return fmt.Errorf("%w: invalid torpedo location %s", ErrInvalidFormField, torpLoc)
+		}
+		if torpLoc.IsTube() && torpCounts.Total() > 1 {
+			return fmt.Errorf("%w: torpedo location %s is a tube and cannot have more than 1 torpedo", ErrInvalidFormField, torpLoc)
+		} else {
+			switch torpLoc.Facing() {
+			case FacingFwd:
+				if torpCounts.Total() > g.GetUBoat().GetUBoatType().FwdReloads() {
+					return fmt.Errorf("%w: total count %d for torpedo location %s exceeds forward reload capacity of %d", ErrInvalidFormField, torpCounts.Total(), torpLoc, g.GetUBoat().GetUBoatType().FwdReloads())
+				}
+			case FacingAft:
+				if torpCounts.Total() > g.GetUBoat().GetUBoatType().AftReloads() {
+					return fmt.Errorf("%w: total count %d for torpedo location %s exceeds aft reload capacity of %d", ErrInvalidFormField, torpCounts.Total(), torpLoc, g.GetUBoat().GetUBoatType().AftReloads())
+				}
+			default:
+				panic("invalid facing")
+			}
+		}
+		for torpType, count := range torpCounts {
+			if count < 0 {
+				return fmt.Errorf("%w: negative count %d for torpedo type %s at location %s", ErrInvalidFormField, count, torpType, torpLoc)
+			}
+		}
+	}
+	return nil
+
+}
+
 func (f *SelectLoadoutForm) Validate() error {
 	if err := f.Overall.Validate(); err != nil {
 		return fmt.Errorf("%w: invalid loadout selection", err)

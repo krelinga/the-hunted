@@ -175,6 +175,29 @@ func (u UBoatType) HasDeckGun() bool {
 	return u.DeckGunAmmo() > 0
 }
 
+func (u UBoatType) HasTorpLoc(loc TorpLoc) bool {
+	u.Must()
+	if loc.IsTube() {
+		switch loc.Facing() {
+		case FacingFwd:
+			return loc.tube <= u.FwdTubes()
+		case FacingAft:
+			return loc.tube <= u.AftTubes()
+		default:
+			panic("invalid facing")
+		}
+	} else {
+		switch loc.Facing() {
+		case FacingFwd:
+			return u.FwdReloads() > 0
+		case FacingAft:
+			return u.AftReloads() > 0
+		default:
+			panic("invalid facing")
+		}
+	}
+}
+
 type TorpCountsView interface {
 	views2.Map[TorpType, int]
 	String() string
