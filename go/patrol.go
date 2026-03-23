@@ -182,7 +182,7 @@ type PatrolAssignmentEvent struct {
 	PatrolDate       PatrolDate
 }
 
-func (e PatrolAssignmentEvent) apply(gd *GameData) {
+func (e PatrolAssignmentEvent) apply(gd *Data) {
 	gd.Patrols = append(gd.Patrols, &PatrolData{
 		PatrolAssignment: e.PatrolAssignment,
 		PatrolDate:       e.PatrolDate,
@@ -209,13 +209,13 @@ type PatrolAssignment struct {
 	AbwehrAgent bool
 }
 
-func (g *gameImpl) startPatrol() {
+func (g *Game) startPatrol() {
 	// TODO: handle minelaying missions.
 	var wolfpack, abwehrAgent bool
-	result := g.roller.Roll2D6()
+	result := g.Roller.Roll2D6()
 	var spot PatrolSpot
 	switch {
-	case g.StartPatrolDate <= PatrolDateDec43:
+	case g.data.StartPatrolDate <= PatrolDateDec43:
 		switch result.AsInt() {
 		case 2, 5:
 			spot = PatrolSpotIndianOcean
@@ -240,13 +240,13 @@ func (g *gameImpl) startPatrol() {
 	}
 
 	switch {
-	case g.UBoat.UBoatType.IsTypeIX() && spot.IsAnyOf(PatrolSpotArctic, PatrolSpotMediterranean):
+	case g.data.UBoat.UBoatType.IsTypeIX() && spot.IsAnyOf(PatrolSpotArctic, PatrolSpotMediterranean):
 		spot = PatrolSpotWestAfricanCoast
-	case g.UBoat.UBoatType.IsTypeVII() && spot.IsAnyOf(PatrolSpotWestAfricanCoast, PatrolSpotBrazilianCoast, PatrolSpotIndianOcean):
+	case g.data.UBoat.UBoatType.IsTypeVII() && spot.IsAnyOf(PatrolSpotWestAfricanCoast, PatrolSpotBrazilianCoast, PatrolSpotIndianOcean):
 		spot = PatrolSpotAtlantic
-	case g.UBoat.UBoatType.IsTypeVII() && g.UBoat.UBoatType != UBoatTypeVIID && spot == PatrolSpotCaribbean:
+	case g.data.UBoat.UBoatType.IsTypeVII() && g.data.UBoat.UBoatType != UBoatTypeVIID && spot == PatrolSpotCaribbean:
 		spot = PatrolSpotAtlantic
-	case g.UBoat.UBoatType.IsAnyOf(UBoatTypeIXD2, UBoatTypeIXD42) && spot == PatrolSpotAtlantic:
+	case g.data.UBoat.UBoatType.IsAnyOf(UBoatTypeIXD2, UBoatTypeIXD42) && spot == PatrolSpotAtlantic:
 		spot = PatrolSpotIndianOcean
 	}
 
@@ -255,21 +255,21 @@ func (g *gameImpl) startPatrol() {
 		Wolfpack:    wolfpack,
 		AbwehrAgent: abwehrAgent,
 	}
-	g.eventWriter.WriteEvent(PatrolAssignmentEvent{
+	g.EventWriter.WriteEvent(PatrolAssignmentEvent{
 		PatrolAssignment: assignment,
 		Result2D6:        result,
-		UBoatType:        g.UBoat.UBoatType,
-		PatrolDate:       g.StartPatrolDate,
+		UBoatType:        g.data.UBoat.UBoatType,
+		PatrolDate:       g.data.StartPatrolDate,
 	})
-	g.Patrols = append(g.Patrols, &PatrolData{
+	g.data.Patrols = append(g.data.Patrols, &PatrolData{
 		PatrolAssignment: assignment,
-		PatrolDate:       g.StartPatrolDate,
+		PatrolDate:       g.data.StartPatrolDate,
 	})
 	// TODO: implement more.
 	g.setGameState(GameStateFinished)
 }
 
-func handleStartPatrol(g gameViewApplier) (gameState, error) {
+func handleStartPatrol(g View, r Roller, ew EventWriter) (gameState, error) {
 	return gameStateDone, nil // TODO
 }
 

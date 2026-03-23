@@ -1,7 +1,7 @@
 package thehunted
 
 type Selector interface {
-	SelectStart(g GameView) *SelectedStart
-	SelectLoadout(g GameView) *SelectedLoadout
-	SelectDefensivePosture(g GameView) *SelectedDefensivePosture
+	SelectStart(g View) *SelectedStart
+	SelectLoadout(g View) *SelectedLoadout
+	SelectDefensivePosture(g View) *SelectedDefensivePosture
 }

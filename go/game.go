@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-type GameView interface {
+type View interface {
 	GetKmdtName() string
 	GetKmdtRank() Rank
 	GetCrewQuality() CrewQuality
@@ -13,7 +13,7 @@ type GameView interface {
 	GetPatrols() PatrolsView
 }
 
-type GameData struct {
+type Data struct {
 	KmdtName    string
 	KmdtRank    Rank
 	CrewQuality CrewQuality
@@ -23,77 +23,92 @@ type GameData struct {
 	StartPatrolDate PatrolDate
 }
 
-func (g *GameData) GetKmdtName() string {
+func (g *Data) GetKmdtName() string {
 	return g.KmdtName
 }
 
-func (g *GameData) GetKmdtRank() Rank {
+func (g *Data) GetKmdtRank() Rank {
 	return g.KmdtRank
 }
 
-func (g *GameData) GetCrewQuality() CrewQuality {
+func (g *Data) GetCrewQuality() CrewQuality {
 	return g.CrewQuality
 }
 
-func (g *GameData) GetUBoat() UBoatView {
+func (g *Data) GetUBoat() UBoatView {
 	return g.UBoat
 }
 
-func (g *GameData) GetPatrols() PatrolsView {
+func (g *Data) GetPatrols() PatrolsView {
 	return g.Patrols
 }
 
-func (g *GameData) GetStartPatrolDate() PatrolDate {
+func (g *Data) GetStartPatrolDate() PatrolDate {
 	return g.StartPatrolDate
 }
 
-type Game interface {
-	GameView
+type Game struct {
+	Selector    Selector
+	EventWriter EventWriter
+	Roller      Roller
 
-	SetSelector(selector Selector) Game
-	SetEventWriter(eventWriter EventWriter) Game
-	SetRoller(roller Roller) Game
-
-	Form() Form
-	Advance(form Form) error
-	Next() error
-	Done() bool
-}
-
-type gameImpl struct {
-	GameData
-
-	selector Selector
-	eventWriter EventWriter
-	roller Roller
-
+	data      Data
 	gameState GameState
 	nextState gameState
 }
 
-func (g *gameImpl) SetSelector(selector Selector) Game {
-	g.selector = selector
-	return g
+func (g *Game) GetView() View {
+	return &g.data
 }
 
-func (g *gameImpl) SetEventWriter(eventWriter EventWriter) Game {
-	g.eventWriter = eventWriter
-	return g
+func (g *Game) Form() Form {
+	switch g.gameState {
+	case GameStateNotStarted:
+		return g.formForNotStarted()
+	case GameStateSelectLoadout:
+		return g.formForSelectLoadout()
+	default:
+		panic(fmt.Sprintf("unexpected game state %v", g.gameState))
+	}
 }
 
-func (g *gameImpl) SetRoller(roller Roller) Game {
-	g.roller = roller
-	return g
+func (g *Game) Advance(form Form) error {
+	switch g.gameState {
+	case GameStateNotStarted:
+		return g.advanceFromNotStarted(form)
+	case GameStateSelectLoadout:
+		return g.advanceFromSelectLoadout(form)
+	default:
+		panic(fmt.Sprintf("unexpected game state %v", g.gameState))
+	}
 }
 
-func (g *gameImpl) apply(e Event) {
-	e.apply(&g.GameData)
-	g.eventWriter.WriteEvent(e)
+func (g *Game) Next() error {
+	if g.Done() {
+		panic("game is already done")
+	}
+	roller := g.Roller
+	if roller == nil {
+		roller = RandomRoller{}
+	}
+	ew := applyEventToGame{G: g}
+	newState, err := allHandlers[g.nextState](g.GetView(), roller, ew)
+	if err != nil {
+		return err
+	}
+	g.nextState = newState
+	return nil
 }
 
-func (g *gameImpl) setGameState(gameState GameState) {
-	g.gameState = gameState
-	g.eventWriter.WriteEvent(GameStateSetEvent{GameState: g.gameState})
+func (g *Game) Done() bool {
+	return g.gameState == GameStateFinished
+}
+
+func (g *Game) setGameState(newState GameState) {
+	g.gameState = newState
+	g.EventWriter.WriteEvent(GameStateSetEvent{
+		GameState: newState,
+	})
 }
 
 type GameState int
@@ -119,61 +134,18 @@ func (gs GameState) String() string {
 
 var ErrUnexpectedForm = errors.New("unexpected form")
 
-func (g *gameImpl) Form() Form {
-	switch g.gameState {
-	case GameStateNotStarted:
-		return g.formForNotStarted()
-	case GameStateSelectLoadout:
-		return g.formForSelectLoadout()
-	default:
-		panic(fmt.Sprintf("unexpected game state %v", g.gameState))
-	}
-}
-
-func (g *gameImpl) Advance(form Form) error {
-	switch g.gameState {
-	case GameStateNotStarted:
-		return g.advanceFromNotStarted(form)
-	case GameStateSelectLoadout:
-		return g.advanceFromSelectLoadout(form)
-	default:
-		panic(fmt.Sprintf("unexpected game state %v", g.gameState))
-	}
-}
-
-func (g *gameImpl) Next() error {
-	if g.Done() {
-		panic("game is already done")
-	}
-	newState, err := allHandlers[g.nextState](g)
-	if err != nil {
-		return err
-	}
-	g.nextState = newState
-	return nil
-}
-
-func (g *gameImpl) Done() bool {
-	return g.gameState == GameStateFinished
-}
-
 type GameStateSetEvent struct {
 	baseEvent
 	GameState GameState
 }
 
-func (e GameStateSetEvent) apply(gd *GameData) {
+func (e GameStateSetEvent) apply(gd *Data) {
 	// No GameData fields are affected by a game state change, so this is a no-op.
 	// TODO: remove this event type eventually.
 }
 
 func (e GameStateSetEvent) String() string {
 	return fmt.Sprintf("Game state set: %s", e.GameState)
-}
-
-func NewGame() Game {
-	gi := &gameImpl{}
-	return gi.SetRoller(RandomRoller{})
 }
 
 type gameState int
@@ -185,16 +157,21 @@ const (
 	gameStateDone
 )
 
-type gameViewApplier interface {
-	GameView
-
-	apply(Event)
-}
-
-type handler func(g gameViewApplier) (gameState, error)
+type handler func(g View, r Roller, ew EventWriter) (gameState, error)
 
 var allHandlers = map[gameState]handler{
 	gameStateStart:         handleStart,
 	gameStateSelectLoadout: handleSelectLoadout,
 	gameStateStartPatrol:   handleStartPatrol,
+}
+
+type applyEventToGame struct {
+	G *Game
+}
+
+func (e applyEventToGame) WriteEvent(ev Event) {
+	ev.apply(&e.G.data)
+	if e.G.EventWriter != nil {
+		e.G.EventWriter.WriteEvent(ev)
+	}
 }

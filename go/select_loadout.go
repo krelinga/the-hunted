@@ -41,8 +41,8 @@ func (f *SelectLoadoutForm) Validate() error {
 	return nil
 }
 
-func (g *gameImpl) formForSelectLoadout() Form {
-	defLoadout := g.UBoat.UBoatType.DefaultLoadout(g.StartPatrolDate)
+func (g *Game) formForSelectLoadout() Form {
+	defLoadout := g.data.UBoat.UBoatType.DefaultLoadout(g.data.StartPatrolDate)
 	var extraE, extraA []TorpCountsData
 
 	for i := 1; i <= 4; i++ {
@@ -72,20 +72,20 @@ func (g *gameImpl) formForSelectLoadout() Form {
 		},
 		Layout: LayoutFormField[TorpLoc, TorpType]{},
 	}
-	if fwdTubes := g.UBoat.UBoatType.FwdTubes(); fwdTubes > 0 {
+	if fwdTubes := g.data.UBoat.UBoatType.FwdTubes(); fwdTubes > 0 {
 		for i := 1; i <= fwdTubes; i++ {
 			form.Layout[NewTorpLocTube(FacingFwd, i)] = NewLayoutFormLoc[TorpType](1)
 		}
 	}
-	if aftTubes := g.UBoat.UBoatType.AftTubes(); aftTubes > 0 {
+	if aftTubes := g.data.UBoat.UBoatType.AftTubes(); aftTubes > 0 {
 		for i := 1; i <= aftTubes; i++ {
 			form.Layout[NewTorpLocTube(FacingAft, i)] = NewLayoutFormLoc[TorpType](1)
 		}
 	}
-	if fwdReloads := g.UBoat.UBoatType.FwdReloads(); fwdReloads > 0 {
+	if fwdReloads := g.data.UBoat.UBoatType.FwdReloads(); fwdReloads > 0 {
 		form.Layout[NewTorpLocReload(FacingFwd)] = NewLayoutFormLoc[TorpType](fwdReloads)
 	}
-	if aftReloads := g.UBoat.UBoatType.AftReloads(); aftReloads > 0 {
+	if aftReloads := g.data.UBoat.UBoatType.AftReloads(); aftReloads > 0 {
 		form.Layout[NewTorpLocReload(FacingAft)] = NewLayoutFormLoc[TorpType](aftReloads)
 	}
 
@@ -98,7 +98,7 @@ type LoadoutChangedEvent struct {
 	Loadout TorpCountsData
 }
 
-func (e LoadoutChangedEvent) apply(gd *GameData) {
+func (e LoadoutChangedEvent) apply(gd *Data) {
 	for k, v := range e.Loadout {
 		gd.UBoat.TorpLayout[e.TorpLoc][k] = v
 	}
@@ -125,7 +125,7 @@ func (e LoadoutChangedEvent) String() string {
 	return fmt.Sprintf("Changed loadout for %s: %s", e.TorpLoc, strings.Join(deltas, ", "))
 }
 
-func (g *gameImpl) advanceFromSelectLoadout(form Form) error {
+func (g *Game) advanceFromSelectLoadout(form Form) error {
 	selectLoadoutForm, ok := form.(*SelectLoadoutForm)
 	if !ok {
 		return fmt.Errorf("%w: expected *SelectLoadoutForm, got %T", ErrUnexpectedForm, form)
@@ -156,8 +156,8 @@ func (g *gameImpl) advanceFromSelectLoadout(form Form) error {
 	})
 	for _, loc := range locs {
 		loadout := TorpCountsData(selectLoadoutForm.Layout[loc].Items)
-		g.UBoat.TorpLayout[loc] = maps.Clone(loadout)
-		g.eventWriter.WriteEvent(LoadoutChangedEvent{
+		g.data.UBoat.TorpLayout[loc] = maps.Clone(loadout)
+		g.EventWriter.WriteEvent(LoadoutChangedEvent{
 			TorpLoc: loc,
 			Loadout: maps.Clone(loadout),
 		})
@@ -166,6 +166,6 @@ func (g *gameImpl) advanceFromSelectLoadout(form Form) error {
 	return nil
 }
 
-func handleSelectLoadout(g gameViewApplier) (gameState, error) {
+func handleSelectLoadout(g View, r Roller, ew EventWriter) (gameState, error) {
 	return gameStateDone, nil // TODO
 }
