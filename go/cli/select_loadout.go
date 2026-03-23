@@ -11,9 +11,14 @@ import (
 )
 
 func (_ selector) SelectLoadout(g thehunted.View) *thehunted.SelectedLoadout {
-	uboatLoadouts := thehunted.PermuteLoadouts(g.GetUBoat().GetUBoatType().DefaultLoadout(g.GetStartPatrolDate()).View())
+	defaultLoadout := g.GetUBoat().GetUBoatType().DefaultLoadout(g.GetStartPatrolDate()).View()
+	uboatLoadouts := thehunted.PermuteLoadouts(defaultLoadout)
 	loadoutOptions := []huh.Option[int]{}
+	var defaultIdx int
 	for i, loadout := range uboatLoadouts {
+		if views.MapEqual(defaultLoadout, loadout) {
+			defaultIdx = i
+		}
 		loadoutOptions = append(loadoutOptions, huh.NewOption(loadout.String(), i))
 	}
 
@@ -38,7 +43,7 @@ func (_ selector) SelectLoadout(g thehunted.View) *thehunted.SelectedLoadout {
 		return int(aTube) - int(bTube)
 	})
 	selectedTorps := make([]thehunted.TorpType, len(tubeLocs))
-	var selectedLoadoutOptionIdx int
+	selectedLoadoutOptionIdx := defaultIdx
 	groups := []*huh.Group{
 		huh.NewGroup(
 			huh.NewSelect[int]().
