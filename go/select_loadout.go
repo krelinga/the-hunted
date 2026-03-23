@@ -5,13 +5,9 @@ import (
 	"maps"
 	"slices"
 	"strings"
-)
 
-type SelectLoadoutForm struct {
-	baseForm
-	Overall SelectFormField[TorpCountsData]
-	Layout  LayoutFormField[TorpLoc, TorpType]
-}
+	"github.com/krelinga/the-hunted/go/views"
+)
 
 type SelectedLoadout struct {
 	Layout map[TorpLoc]TorpCountsData
@@ -20,19 +16,19 @@ type SelectedLoadout struct {
 func (s *SelectedLoadout) Validate(g View) error {
 	for torpLoc, torpCounts := range s.Layout {
 		if !g.GetUBoat().GetUBoatType().HasTorpLoc(torpLoc) {
-			return fmt.Errorf("%w: invalid torpedo location %s", ErrInvalidFormField, torpLoc)
+			return fmt.Errorf("%w: invalid torpedo location %s", ErrInvalidSelection, torpLoc)
 		}
 		if torpLoc.IsTube() && torpCounts.Total() > 1 {
-			return fmt.Errorf("%w: torpedo location %s is a tube and cannot have more than 1 torpedo", ErrInvalidFormField, torpLoc)
+			return fmt.Errorf("%w: torpedo location %s is a tube and cannot have more than 1 torpedo", ErrInvalidSelection, torpLoc)
 		} else {
 			switch torpLoc.Facing() {
 			case FacingFwd:
 				if torpCounts.Total() > g.GetUBoat().GetUBoatType().FwdReloads() {
-					return fmt.Errorf("%w: total count %d for torpedo location %s exceeds forward reload capacity of %d", ErrInvalidFormField, torpCounts.Total(), torpLoc, g.GetUBoat().GetUBoatType().FwdReloads())
+					return fmt.Errorf("%w: total count %d for torpedo location %s exceeds forward reload capacity of %d", ErrInvalidSelection, torpCounts.Total(), torpLoc, g.GetUBoat().GetUBoatType().FwdReloads())
 				}
 			case FacingAft:
 				if torpCounts.Total() > g.GetUBoat().GetUBoatType().AftReloads() {
-					return fmt.Errorf("%w: total count %d for torpedo location %s exceeds aft reload capacity of %d", ErrInvalidFormField, torpCounts.Total(), torpLoc, g.GetUBoat().GetUBoatType().AftReloads())
+					return fmt.Errorf("%w: total count %d for torpedo location %s exceeds aft reload capacity of %d", ErrInvalidSelection, torpCounts.Total(), torpLoc, g.GetUBoat().GetUBoatType().AftReloads())
 				}
 			default:
 				panic("invalid facing")
@@ -40,7 +36,7 @@ func (s *SelectedLoadout) Validate(g View) error {
 		}
 		for torpType, count := range torpCounts {
 			if count < 0 {
-				return fmt.Errorf("%w: negative count %d for torpedo type %s at location %s", ErrInvalidFormField, count, torpType, torpLoc)
+				return fmt.Errorf("%w: negative count %d for torpedo type %s at location %s", ErrInvalidSelection, count, torpType, torpLoc)
 			}
 		}
 	}
@@ -48,99 +44,24 @@ func (s *SelectedLoadout) Validate(g View) error {
 
 }
 
-func (f *SelectLoadoutForm) Validate() error {
-	if err := f.Overall.Validate(); err != nil {
-		return fmt.Errorf("%w: invalid loadout selection", err)
-	}
-	if err := f.Layout.Validate(); err != nil {
-		return fmt.Errorf("%w: invalid layout selection", err)
-	}
-
-	totals := map[TorpType]int{}
-	for _, locForm := range f.Layout {
-		for torpType, count := range locForm.Items {
-			totals[torpType] += count
-		}
-	}
-	selectedLoadout := f.Overall.Options[f.Overall.Selected]
-	for torpType, total := range totals {
-		if total != selectedLoadout[torpType] {
-			return fmt.Errorf("%w: total count %d for torpedo type %s does not match selected loadout count %d", ErrInvalidFormField, total, torpType, selectedLoadout[torpType])
-		}
-	}
-
-	return nil
-}
-
-func (g *Game) formForSelectLoadout() Form {
-	defLoadout := g.data.UBoat.UBoatType.DefaultLoadout(g.data.StartPatrolDate)
-	var extraE, extraA []TorpCountsData
-
-	for i := 1; i <= 4; i++ {
-		if defLoadout[TorpTypeG7a]-i >= 0 {
-			l := maps.Clone(defLoadout)
-			l[TorpTypeG7a] -= i
-			l[TorpTypeG7e] += i
-			extraE = append(extraE, l)
-		}
-		if defLoadout[TorpTypeG7e]-i >= 0 {
-			l := maps.Clone(defLoadout)
-			l[TorpTypeG7e] -= i
-			l[TorpTypeG7a] += i
-			extraA = append(extraA, l)
-		}
-	}
-	slices.Reverse(extraE)
-	var options []TorpCountsData
-	options = append(options, extraE...)
-	options = append(options, defLoadout)
-	options = append(options, extraA...)
-
-	form := &SelectLoadoutForm{
-		Overall: SelectFormField[TorpCountsData]{
-			Options:  options,
-			Selected: len(extraE),
-		},
-		Layout: LayoutFormField[TorpLoc, TorpType]{},
-	}
-	if fwdTubes := g.data.UBoat.UBoatType.FwdTubes(); fwdTubes > 0 {
-		for i := 1; i <= fwdTubes; i++ {
-			form.Layout[NewTorpLocTube(FacingFwd, i)] = NewLayoutFormLoc[TorpType](1)
-		}
-	}
-	if aftTubes := g.data.UBoat.UBoatType.AftTubes(); aftTubes > 0 {
-		for i := 1; i <= aftTubes; i++ {
-			form.Layout[NewTorpLocTube(FacingAft, i)] = NewLayoutFormLoc[TorpType](1)
-		}
-	}
-	if fwdReloads := g.data.UBoat.UBoatType.FwdReloads(); fwdReloads > 0 {
-		form.Layout[NewTorpLocReload(FacingFwd)] = NewLayoutFormLoc[TorpType](fwdReloads)
-	}
-	if aftReloads := g.data.UBoat.UBoatType.AftReloads(); aftReloads > 0 {
-		form.Layout[NewTorpLocReload(FacingAft)] = NewLayoutFormLoc[TorpType](aftReloads)
-	}
-
-	return form
-}
-
 type LoadoutChangedEvent struct {
 	baseEvent
 	TorpLoc TorpLoc
-	Loadout TorpCountsData
+	TorpCounts TorpCountsView
 }
 
 func (e LoadoutChangedEvent) apply(gd *Data) {
-	for k, v := range e.Loadout {
+	for k, v := range e.TorpCounts.All() {
 		gd.UBoat.TorpLayout[e.TorpLoc][k] = v
 	}
 }
 
 func (e LoadoutChangedEvent) String() string {
-	types := slices.Collect(maps.Keys(e.Loadout))
+	types := slices.Collect(e.TorpCounts.Keys())
 	slices.Sort(types)
 	deltas := []string{}
 	for _, torpType := range types {
-		delta := e.Loadout[torpType]
+		delta, _ := e.TorpCounts.Get(torpType)
 		if delta == 0 {
 			continue
 		}
@@ -156,15 +77,16 @@ func (e LoadoutChangedEvent) String() string {
 	return fmt.Sprintf("Changed loadout for %s: %s", e.TorpLoc, strings.Join(deltas, ", "))
 }
 
-func (g *Game) advanceFromSelectLoadout(form Form) error {
-	selectLoadoutForm, ok := form.(*SelectLoadoutForm)
-	if !ok {
-		return fmt.Errorf("%w: expected *SelectLoadoutForm, got %T", ErrUnexpectedForm, form)
+func handleSelectLoadout(g View, s Selector, r Roller, ew EventWriter) (gameState, error) {
+	selected := s.SelectLoadout(g)
+	if selected == nil {
+		return 0, errNoChange
 	}
-	if err := selectLoadoutForm.Validate(); err != nil {
-		return err
+	if err := selected.Validate(g); err != nil {
+		return 0, err
 	}
-	locs := slices.Collect(maps.Keys(selectLoadoutForm.Layout))
+
+	locs := slices.Collect(maps.Keys(selected.Layout))
 	slices.SortFunc(locs, func(a, b TorpLoc) int {
 		if a.IsTube() != b.IsTube() {
 			if a.IsTube() {
@@ -186,17 +108,37 @@ func (g *Game) advanceFromSelectLoadout(form Form) error {
 		return 0
 	})
 	for _, loc := range locs {
-		loadout := TorpCountsData(selectLoadoutForm.Layout[loc].Items)
-		g.data.UBoat.TorpLayout[loc] = maps.Clone(loadout)
-		g.EventWriter.WriteEvent(LoadoutChangedEvent{
+		ew.WriteEvent(LoadoutChangedEvent{
 			TorpLoc: loc,
-			Loadout: maps.Clone(loadout),
+			TorpCounts: selected.Layout[loc].View(),
 		})
 	}
-	g.startPatrol()
-	return nil
+	startPatrol(g, r, ew)
+	// TODO: implement more.
+	return gameStateDone, nil
 }
 
-func handleSelectLoadout(g View, s Selector, r Roller, ew EventWriter) (gameState, error) {
-	return gameStateDone, nil // TODO
+func PermuteLoadouts(defLoadout TorpCountsView) []TorpCountsView {
+	var extraE, extraA []TorpCountsView
+
+	for i := 1; i <= 4; i++ {
+		if count, _ := defLoadout.Get(TorpTypeG7a); count-i >= 0 {
+			l := TorpCountsData(views.MapClone(defLoadout))
+			l[TorpTypeG7a] -= i
+			l[TorpTypeG7e] += i
+			extraE = append(extraE, l.View())
+		}
+		if count, _ := defLoadout.Get(TorpTypeG7e); count-i >= 0 {
+			l := TorpCountsData(views.MapClone(defLoadout))
+			l[TorpTypeG7e] -= i
+			l[TorpTypeG7a] += i
+			extraA = append(extraA, l.View())
+		}
+	}
+	slices.Reverse(extraE)
+	var options []TorpCountsView
+	options = append(options, extraE...)
+	options = append(options, defLoadout)
+	options = append(options, extraA...)
+	return options
 }

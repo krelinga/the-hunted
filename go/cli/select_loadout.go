@@ -2,21 +2,23 @@ package main
 
 import (
 	"fmt"
-	"maps"
+	"log"
 	"slices"
 
 	"charm.land/huh/v2"
 	thehunted "github.com/krelinga/the-hunted/go"
+	"github.com/krelinga/the-hunted/go/views"
 )
 
-func handleSelectLoadout(form *thehunted.SelectLoadoutForm) error {
+func (_ selector) SelectLoadout(g thehunted.View) *thehunted.SelectedLoadout {
+	uboatLoadouts := thehunted.PermuteLoadouts(g.GetUBoat().GetUBoatType().DefaultLoadout(g.GetStartPatrolDate()).View())
 	loadoutOptions := []huh.Option[int]{}
-	for i, loadout := range form.Overall.Options {
+	for i, loadout := range uboatLoadouts {
 		loadoutOptions = append(loadoutOptions, huh.NewOption(loadout.String(), i))
 	}
 
 	tubeLocs := []thehunted.TorpLoc{}
-	for loc := range form.Layout {
+	for loc := range g.GetUBoat().GetUBoatType().TorpLocs() {
 		if loc.IsTube() {
 			tubeLocs = append(tubeLocs, loc)
 		}
@@ -36,18 +38,19 @@ func handleSelectLoadout(form *thehunted.SelectLoadoutForm) error {
 		return int(aTube) - int(bTube)
 	})
 	selectedTorps := make([]thehunted.TorpType, len(tubeLocs))
+	var selectedLoadoutOptionIdx int
 	groups := []*huh.Group{
 		huh.NewGroup(
 			huh.NewSelect[int]().
 				Options(loadoutOptions...).
-				Value(&form.Overall.Selected),
+				Value(&selectedLoadoutOptionIdx),
 		).Title("Overall Loadout"),
 	}
 	for i, loc := range tubeLocs {
 		groups = append(groups, huh.NewGroup(
 			huh.NewSelect[thehunted.TorpType]().
 				OptionsFunc(func() []huh.Option[thehunted.TorpType] {
-					overall := maps.Clone(form.Overall.Options[form.Overall.Selected])
+					overall := views.MapClone(uboatLoadouts[selectedLoadoutOptionIdx])
 					for j := 0; j < len(selectedTorps) && j < i; j++ {
 						overall[selectedTorps[j]]--
 					}
@@ -68,10 +71,9 @@ func handleSelectLoadout(form *thehunted.SelectLoadoutForm) error {
 		).Title(fmt.Sprintf("Select Torpedo for %s", loc)))
 	}
 	var aftReloadSlots []thehunted.TorpType
-	if aftReloads, ok := form.Layout[thehunted.NewTorpLocReload(thehunted.FacingAft)]; ok {
-		capacity := aftReloads.Capacity
+	if capacity := g.GetUBoat().GetUBoatType().AftReloads(); capacity > 0 {
 		optFunc := func() []huh.Option[thehunted.TorpType] {
-			overall := maps.Clone(form.Overall.Options[form.Overall.Selected])
+			overall := views.MapClone(uboatLoadouts[selectedLoadoutOptionIdx])
 			for j := 0; j < len(selectedTorps); j++ {
 				overall[selectedTorps[j]]--
 			}
@@ -114,19 +116,23 @@ func handleSelectLoadout(form *thehunted.SelectLoadoutForm) error {
 
 	huhForm := huh.NewForm(groups...)
 	if err := huhForm.Run(); err != nil {
-		return fmt.Errorf("error running form: %w", err)
+		log.Fatalf("error running form: %v", err)
 	}
 
-	fwdReloads := form.Layout[thehunted.NewTorpLocReload(thehunted.FacingFwd)].Items
-	maps.Copy(fwdReloads, form.Overall.Options[form.Overall.Selected])
+	layout := map[thehunted.TorpLoc]thehunted.TorpCountsData{}
+	fwdReloads := thehunted.TorpCountsData(views.MapClone(uboatLoadouts[selectedLoadoutOptionIdx]))
 	for i, loc := range tubeLocs {
-		form.Layout[loc].Items[selectedTorps[i]]++
+		layout[loc] = thehunted.TorpCountsData{selectedTorps[i]: 1}
 		fwdReloads[selectedTorps[i]]--
 	}
+	if len(aftReloadSlots) > 0 {
+		layout[thehunted.NewTorpLocReload(thehunted.FacingAft)] = thehunted.TorpCountsData{}
+	}
 	for _, torpType := range aftReloadSlots {
-		form.Layout[thehunted.NewTorpLocReload(thehunted.FacingAft)].Items[torpType]++
+		layout[thehunted.NewTorpLocReload(thehunted.FacingAft)][torpType]++
 		fwdReloads[torpType]--
 	}
+	layout[thehunted.NewTorpLocReload(thehunted.FacingFwd)] = fwdReloads
 
-	return nil
+	return &thehunted.SelectedLoadout{Layout: layout}
 }

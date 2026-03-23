@@ -1,4 +1,4 @@
-package views2
+package views
 
 type Viewer[T any] interface {
 	View() T

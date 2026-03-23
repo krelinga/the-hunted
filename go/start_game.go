@@ -2,13 +2,6 @@ package thehunted
 
 import "fmt"
 
-type StartGameForm struct {
-	baseForm
-	UBoatType SelectFormField[UBoatType]
-	UBoatID   TextFormField
-	KmdtName  TextFormField
-}
-
 type SelectedStart struct {
 	UBoatType UBoatType
 	UBoatID   string
@@ -20,31 +13,12 @@ func (ss SelectedStart) Validate() error {
 		return fmt.Errorf("%w: invalid u-boat type", err)
 	}
 	if ss.UBoatID == "" {
-		return fmt.Errorf("%w: u-boat ID cannot be empty", ErrInvalidFormField)
+		return fmt.Errorf("%w: u-boat ID cannot be empty", ErrInvalidSelection)
 	}
 	if ss.KmdtName == "" {
-		return fmt.Errorf("%w: kommandant name cannot be empty", ErrInvalidFormField)
+		return fmt.Errorf("%w: kommandant name cannot be empty", ErrInvalidSelection)
 	}
 	return nil
-}
-
-func (f *StartGameForm) Validate() error {
-	if err := f.UBoatType.Validate(); err != nil {
-		return fmt.Errorf("%w: invalid u-boat type", err)
-	}
-	return nil
-}
-
-func (g *Game) formForNotStarted() Form {
-	return &StartGameForm{
-		UBoatType: SelectFormField[UBoatType]{
-			Options: []UBoatType{
-				UBoatTypeVIIB, UBoatTypeVIIC, UBoatTypeVIICFlak, UBoatTypeVIIC41, UBoatTypeVIID,
-				UBoatTypeIXB, UBoatTypeIXC, UBoatTypeIXC40, UBoatTypeIXD2, UBoatTypeIXD42,
-				UBoatTypeXB, UBoatTypeXII, UBoatTypeXIV, UBoatTypeXXI,
-			},
-		},
-	}
 }
 
 type KmdtNamedEvent struct {
@@ -114,44 +88,6 @@ func (e CrewQualitySetEvent) apply(gd *Data) {
 
 func (e CrewQualitySetEvent) String() string {
 	return fmt.Sprintf("Crew quality set: %s", e.CrewQuality)
-}
-
-func (g *Game) advanceFromNotStarted(form Form) error {
-	startGameForm, ok := form.(*StartGameForm)
-	if !ok {
-		return fmt.Errorf("%w: expected *StartGameForm, got %T", ErrUnexpectedForm, form)
-	}
-	if err := startGameForm.Validate(); err != nil {
-		return err
-	}
-	g.data.KmdtName = string(startGameForm.KmdtName)
-	g.EventWriter.WriteEvent(KmdtNamedEvent{KmdtName: g.data.KmdtName})
-	uboatType := startGameForm.UBoatType.Options[startGameForm.UBoatType.Selected]
-	g.data.UBoat = NewUBoatData(uboatType, string(startGameForm.UBoatID))
-	g.EventWriter.WriteEvent(NewUBoatEvent{UBoatType: uboatType, UBoatID: string(startGameForm.UBoatID)})
-	g.data.StartPatrolDate = uboatType.FirstPatrolDate()
-	g.EventWriter.WriteEvent(FirstPatrolDateSetEvent{FirstPatrolDate: g.data.StartPatrolDate, UBoatType: uboatType})
-	rankD6 := g.Roller.RollD6()
-	var rankThreshold DiceD6
-	if g.data.StartPatrolDate.Year() <= 1943 {
-		rankThreshold = 4
-	} else {
-		rankThreshold = 5
-	}
-	if rankD6 <= rankThreshold {
-		g.data.KmdtRank = RankOltzS
-	} else {
-		g.data.KmdtRank = RankKptLt
-	}
-	g.EventWriter.WriteEvent(StartingRankSetEvent{
-		D6:         rankD6,
-		Rank:       g.data.KmdtRank,
-		PatrolDate: g.data.StartPatrolDate,
-	})
-	g.data.CrewQuality = CrewQualityTrained
-	g.EventWriter.WriteEvent(CrewQualitySetEvent{CrewQuality: g.data.CrewQuality})
-	g.setGameState(GameStateSelectLoadout)
-	return nil
 }
 
 func handleStart(g View, s Selector, r Roller, ew EventWriter) (gameState, error) {

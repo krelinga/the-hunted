@@ -1,4 +1,4 @@
-package views2
+package views
 
 import (
 	"iter"

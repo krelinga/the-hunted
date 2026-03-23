@@ -17,23 +17,13 @@ func main() {
 	g := thehunted.Game{
 		EventWriter: EventWriterPrinter{},
 		Roller:      thehunted.RandomRoller{},
+		Selector:    selector{},
 	}
 	for !g.Done() {
-		f := g.Form()
-		var err error
-		switch f := f.(type) {
-		case *thehunted.StartGameForm:
-			err = handleStartGame(f)
-		case *thehunted.SelectLoadoutForm:
-			err = handleSelectLoadout(f)
-		default:
-			log.Fatalf("unexpected form type: %T", f)
-		}
-		if err != nil {
-			log.Fatalf("form population error: %v", err)
-		}
-		if err := g.Advance(f); err != nil {
-			log.Fatalf("error advancing game: %v", err)
+		if err := g.Next(); err != nil {
+			log.Fatalf("error running game: %v", err)
 		}
 	}
 }
+
+type selector struct{}

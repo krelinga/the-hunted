@@ -206,13 +206,13 @@ type PatrolAssignment struct {
 	AbwehrAgent bool
 }
 
-func (g *Game) startPatrol() {
+func startPatrol(g View, r Roller, ew EventWriter) {
 	// TODO: handle minelaying missions.
 	var wolfpack, abwehrAgent bool
-	result := g.Roller.Roll2D6()
+	result := r.Roll2D6()
 	var spot PatrolSpot
 	switch {
-	case g.data.StartPatrolDate <= PatrolDateDec43:
+	case g.GetStartPatrolDate() <= PatrolDateDec43:
 		switch result.AsInt() {
 		case 2, 5:
 			spot = PatrolSpotIndianOcean
@@ -237,13 +237,13 @@ func (g *Game) startPatrol() {
 	}
 
 	switch {
-	case g.data.UBoat.UBoatType.IsTypeIX() && spot.IsAnyOf(PatrolSpotArctic, PatrolSpotMediterranean):
+	case g.GetUBoat().GetUBoatType().IsTypeIX() && spot.IsAnyOf(PatrolSpotArctic, PatrolSpotMediterranean):
 		spot = PatrolSpotWestAfricanCoast
-	case g.data.UBoat.UBoatType.IsTypeVII() && spot.IsAnyOf(PatrolSpotWestAfricanCoast, PatrolSpotBrazilianCoast, PatrolSpotIndianOcean):
+	case g.GetUBoat().GetUBoatType().IsTypeVII() && spot.IsAnyOf(PatrolSpotWestAfricanCoast, PatrolSpotBrazilianCoast, PatrolSpotIndianOcean):
 		spot = PatrolSpotAtlantic
-	case g.data.UBoat.UBoatType.IsTypeVII() && g.data.UBoat.UBoatType != UBoatTypeVIID && spot == PatrolSpotCaribbean:
+	case g.GetUBoat().GetUBoatType().IsTypeVII() && g.GetUBoat().GetUBoatType() != UBoatTypeVIID && spot == PatrolSpotCaribbean:
 		spot = PatrolSpotAtlantic
-	case g.data.UBoat.UBoatType.IsAnyOf(UBoatTypeIXD2, UBoatTypeIXD42) && spot == PatrolSpotAtlantic:
+	case g.GetUBoat().GetUBoatType().IsAnyOf(UBoatTypeIXD2, UBoatTypeIXD42) && spot == PatrolSpotAtlantic:
 		spot = PatrolSpotIndianOcean
 	}
 
@@ -252,22 +252,12 @@ func (g *Game) startPatrol() {
 		Wolfpack:    wolfpack,
 		AbwehrAgent: abwehrAgent,
 	}
-	g.EventWriter.WriteEvent(PatrolAssignmentEvent{
+	ew.WriteEvent(PatrolAssignmentEvent{
 		PatrolAssignment: assignment,
 		Result2D6:        result,
-		UBoatType:        g.data.UBoat.UBoatType,
-		PatrolDate:       g.data.StartPatrolDate,
+		UBoatType:        g.GetUBoat().GetUBoatType(),
+		PatrolDate:       g.GetStartPatrolDate(),
 	})
-	g.data.Patrols = append(g.data.Patrols, &PatrolData{
-		PatrolAssignment: assignment,
-		PatrolDate:       g.data.StartPatrolDate,
-	})
-	// TODO: implement more.
-	g.setGameState(GameStateFinished)
-}
-
-func handleStartPatrol(g View, s Selector, r Roller, ew EventWriter) (gameState, error) {
-	return gameStateDone, nil // TODO
 }
 
 type PatrolView interface {

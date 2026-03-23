@@ -1,15 +1,16 @@
 package main
 
 import (
-	"fmt"
+	"log"
 
 	"charm.land/huh/v2"
 	thehunted "github.com/krelinga/the-hunted/go"
 )
 
-func handleStartGame(form *thehunted.StartGameForm) error {
+func (_ selector) SelectStart(g thehunted.View) *thehunted.SelectedStart {
+	uboatTypes := thehunted.AllUBoatTypes()
 	uboatOptions := []huh.Option[int]{}
-	for i, option := range form.UBoatType.Options {
+	for i, option := range uboatTypes.All() {
 		uboatOptions = append(uboatOptions, huh.NewOption(option.String(), i))
 	}
 	var kmdtName, uBoatID string
@@ -29,10 +30,11 @@ func handleStartGame(form *thehunted.StartGameForm) error {
 		),
 	)
 	if err := huhForm.Run(); err != nil {
-		return fmt.Errorf("error running form: %w", err)
+		log.Fatalf("error running form: %v", err)
 	}
-	form.KmdtName = thehunted.TextFormField(kmdtName)
-	form.UBoatID = thehunted.TextFormField(uBoatID)
-	form.UBoatType.Selected = uboatTypeIndex
-	return nil
+	return &thehunted.SelectedStart{
+		KmdtName: kmdtName,
+		UBoatID:  uBoatID,
+		UBoatType: uboatTypes.Get(uboatTypeIndex),
+	}
 }

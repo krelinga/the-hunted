@@ -2,7 +2,6 @@ package thehunted
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/krelinga/the-hunted/go/views"
 )
@@ -12,7 +11,8 @@ type View interface {
 	GetKmdtRank() Rank
 	GetCrewQuality() CrewQuality
 	GetUBoat() UBoatView
-	GetPatrols() views2.Slice[PatrolView]
+	GetPatrols() views.Slice[PatrolView]
+	GetStartPatrolDate() PatrolDate
 }
 
 type Data struct {
@@ -49,8 +49,8 @@ func (v viewImpl) GetUBoat() UBoatView {
 	return v.data.UBoat.View()
 }
 
-func (v viewImpl) GetPatrols() views2.Slice[PatrolView] {
-	return views2.WrapViewerSlice(v.data.Patrols)
+func (v viewImpl) GetPatrols() views.Slice[PatrolView] {
+	return views.WrapViewerSlice(v.data.Patrols)
 }
 
 func (v viewImpl) GetStartPatrolDate() PatrolDate {
@@ -63,34 +63,11 @@ type Game struct {
 	Roller      Roller
 
 	data      Data
-	gameState GameState
 	nextState gameState
 }
 
 func (g *Game) GetView() View {
 	return g.data.View()
-}
-
-func (g *Game) Form() Form {
-	switch g.gameState {
-	case GameStateNotStarted:
-		return g.formForNotStarted()
-	case GameStateSelectLoadout:
-		return g.formForSelectLoadout()
-	default:
-		panic(fmt.Sprintf("unexpected game state %v", g.gameState))
-	}
-}
-
-func (g *Game) Advance(form Form) error {
-	switch g.gameState {
-	case GameStateNotStarted:
-		return g.advanceFromNotStarted(form)
-	case GameStateSelectLoadout:
-		return g.advanceFromSelectLoadout(form)
-	default:
-		panic(fmt.Sprintf("unexpected game state %v", g.gameState))
-	}
 }
 
 var errNoChange = errors.New("no change in game state")
@@ -115,52 +92,10 @@ func (g *Game) Next() error {
 }
 
 func (g *Game) Done() bool {
-	return g.gameState == GameStateFinished
-}
-
-func (g *Game) setGameState(newState GameState) {
-	g.gameState = newState
-	g.EventWriter.WriteEvent(GameStateSetEvent{
-		GameState: newState,
-	})
-}
-
-type GameState int
-
-const (
-	GameStateNotStarted GameState = iota
-	GameStateSelectLoadout
-	GameStateFinished
-)
-
-func (gs GameState) String() string {
-	switch gs {
-	case GameStateNotStarted:
-		return "Not Started"
-	case GameStateSelectLoadout:
-		return "Select Loadout"
-	case GameStateFinished:
-		return "Finished"
-	default:
-		return fmt.Sprintf("Unknown GameState (%d)", gs)
-	}
+	return g.nextState == gameStateDone
 }
 
 var ErrUnexpectedForm = errors.New("unexpected form")
-
-type GameStateSetEvent struct {
-	baseEvent
-	GameState GameState
-}
-
-func (e GameStateSetEvent) apply(gd *Data) {
-	// No GameData fields are affected by a game state change, so this is a no-op.
-	// TODO: remove this event type eventually.
-}
-
-func (e GameStateSetEvent) String() string {
-	return fmt.Sprintf("Game state set: %s", e.GameState)
-}
 
 type gameState int
 
@@ -176,7 +111,6 @@ type handler func(g View, s Selector, r Roller, ew EventWriter) (gameState, erro
 var allHandlers = map[gameState]handler{
 	gameStateStart:         handleStart,
 	gameStateSelectLoadout: handleSelectLoadout,
-	gameStateStartPatrol:   handleStartPatrol,
 }
 
 type applyEventToGame struct {
@@ -189,3 +123,5 @@ func (e applyEventToGame) WriteEvent(ev Event) {
 		e.G.EventWriter.WriteEvent(ev)
 	}
 }
+
+var ErrInvalidSelection = errors.New("invalid selection")

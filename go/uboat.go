@@ -3,6 +3,7 @@ package thehunted
 import (
 	"errors"
 	"fmt"
+	"iter"
 	"slices"
 	"strings"
 
@@ -27,6 +28,27 @@ const (
 	UBoatTypeXIV
 	UBoatTypeXXI
 )
+
+var allUBoatTypes = []UBoatType{
+	UBoatTypeVIIB,
+	UBoatTypeVIIC,
+	UBoatTypeVIICFlak,
+	UBoatTypeVIIC41,
+	UBoatTypeVIID,
+	UBoatTypeIXB,
+	UBoatTypeIXC,
+	UBoatTypeIXC40,
+	UBoatTypeIXD2,
+	UBoatTypeIXD42,
+	UBoatTypeXB,
+	UBoatTypeXII,
+	UBoatTypeXIV,
+	UBoatTypeXXI,
+}
+
+func AllUBoatTypes() views.Slice[UBoatType] {
+	return views.WrapSlice(allUBoatTypes)
+}
 
 var ErrInvalidUBoatType = errors.New("invalid u-boat type")
 
@@ -199,7 +221,7 @@ func (u UBoatType) HasTorpLoc(loc TorpLoc) bool {
 }
 
 type TorpCountsView interface {
-	views2.Map[TorpType, int]
+	views.Map[TorpType, int]
 	String() string
 	Total() int
 }
@@ -216,7 +238,7 @@ func (d TorpCountsData) Total() int {
 
 func (d TorpCountsData) View() TorpCountsView {
 	return torpCountsViewImpl{
-		Map:  views2.WrapMap(d),
+		Map:  views.WrapMap(d),
 		data: d,
 	}
 }
@@ -233,7 +255,7 @@ func (d TorpCountsData) String() string {
 }
 
 type torpCountsViewImpl struct {
-	views2.Map[TorpType, int]
+	views.Map[TorpType, int]
 	data TorpCountsData
 }
 
@@ -246,7 +268,7 @@ func (v torpCountsViewImpl) String() string {
 }
 
 type TorpLayoutView interface {
-	views2.Map[TorpLoc, TorpCountsView]
+	views.Map[TorpLoc, TorpCountsView]
 	Total() int
 }
 
@@ -262,13 +284,13 @@ func (d TorpLayoutData) Total() int {
 
 func (d TorpLayoutData) View() TorpLayoutView {
 	return torpLayoutViewImpl{
-		Map:  views2.WrapViewerMap(d),
+		Map:  views.WrapViewerMap(d),
 		data: d,
 	}
 }
 
 type torpLayoutViewImpl struct {
-	views2.Map[TorpLoc, TorpCountsView]
+	views.Map[TorpLoc, TorpCountsView]
 	data TorpLayoutData
 }
 
@@ -370,6 +392,32 @@ func (u UBoatType) IsTypeIX() bool {
 
 func (u UBoatType) IsAnyOf(types ...UBoatType) bool {
 	return slices.Contains(types, u)
+}
+
+func (u UBoatType) TorpLocs() iter.Seq[TorpLoc] {
+	u.Must()
+	return func(yield func(TorpLoc) bool) {
+		for tube := 1; tube <= u.FwdTubes(); tube++ {
+			if !yield(NewTorpLocTube(FacingFwd, tube)) {
+				return
+			}
+		}
+		for tube := 1; tube <= u.AftTubes(); tube++ {
+			if !yield(NewTorpLocTube(FacingAft, tube)) {
+				return
+			}
+		}
+		if u.FwdReloads() > 0 {
+			if !yield(NewTorpLocReload(FacingFwd)) {
+				return
+			}
+		}
+		if u.AftReloads() > 0 {
+			if !yield(NewTorpLocReload(FacingAft)) {
+				return
+			}
+		}
+	}
 }
 
 type UBoatView interface {
