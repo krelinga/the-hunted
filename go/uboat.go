@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/krelinga/the-hunted/go/views2"
+	"github.com/krelinga/the-hunted/go/views"
 )
 
 type UBoatType int

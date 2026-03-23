@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/krelinga/the-hunted/go/views2"
+	"github.com/krelinga/the-hunted/go/views"
 )
 
 type View interface {
