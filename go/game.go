@@ -92,7 +92,7 @@ func (g *Game) Next() error {
 		roller = RandomRoller{}
 	}
 	ew := applyEventToGame{G: g}
-	newState, err := allHandlers[g.nextState](g.GetView(), roller, ew)
+	newState, err := allHandlers[g.nextState](g.GetView(), g.Selector, roller, ew)
 	if err != nil {
 		return err
 	}
@@ -157,7 +157,7 @@ const (
 	gameStateDone
 )
 
-type handler func(g View, r Roller, ew EventWriter) (gameState, error)
+type handler func(g View, s Selector, r Roller, ew EventWriter) (gameState, error)
 
 var allHandlers = map[gameState]handler{
 	gameStateStart:         handleStart,

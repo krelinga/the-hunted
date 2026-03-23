@@ -166,6 +166,6 @@ func (g *Game) advanceFromSelectLoadout(form Form) error {
 	return nil
 }
 
-func handleSelectLoadout(g View, r Roller, ew EventWriter) (gameState, error) {
+func handleSelectLoadout(g View, s Selector, r Roller, ew EventWriter) (gameState, error) {
 	return gameStateDone, nil // TODO
 }

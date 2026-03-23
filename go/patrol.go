@@ -269,7 +269,7 @@ func (g *Game) startPatrol() {
 	g.setGameState(GameStateFinished)
 }
 
-func handleStartPatrol(g View, r Roller, ew EventWriter) (gameState, error) {
+func handleStartPatrol(g View, s Selector, r Roller, ew EventWriter) (gameState, error) {
 	return gameStateDone, nil // TODO
 }
 

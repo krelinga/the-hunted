@@ -154,6 +154,6 @@ func (g *Game) advanceFromNotStarted(form Form) error {
 	return nil
 }
 
-func handleStart(g View, r Roller, ew EventWriter) (gameState, error) {
+func handleStart(g View, s Selector, r Roller, ew EventWriter) (gameState, error) {
 	return gameStateDone, nil // TODO
 }
