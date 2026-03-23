@@ -155,5 +155,51 @@ func (g *Game) advanceFromNotStarted(form Form) error {
 }
 
 func handleStart(g View, s Selector, r Roller, ew EventWriter) (gameState, error) {
-	return gameStateDone, nil // TODO
+	selected := s.SelectStart(g)
+	if selected == nil {
+		return 0, errNoChange
+	}
+	if err := selected.Validate(); err != nil {
+		return 0, err
+	}
+
+	ew.WriteEvent(KmdtNamedEvent{
+		KmdtName: selected.KmdtName,
+	})
+
+	ew.WriteEvent(NewUBoatEvent{
+		UBoatType: selected.UBoatType,
+		UBoatID:   selected.UBoatID,
+	})
+
+	patrolDate := selected.UBoatType.FirstPatrolDate()
+	ew.WriteEvent(FirstPatrolDateSetEvent{
+		FirstPatrolDate: patrolDate,
+		UBoatType:       selected.UBoatType,
+	})
+
+	rankD6 := r.RollD6()
+	var rankThreshold DiceD6
+	if patrolDate.Year() <= 1943 {
+		rankThreshold = 4
+	} else {
+		rankThreshold = 5
+	}
+	var rank Rank
+	if rankD6 <= rankThreshold {
+		rank = RankOltzS
+	} else {
+		rank = RankKptLt
+	}
+	ew.WriteEvent(StartingRankSetEvent{
+		D6:         rankD6,
+		Rank:       rank,
+		PatrolDate: patrolDate,
+	})
+
+	ew.WriteEvent(CrewQualitySetEvent{
+		CrewQuality: CrewQualityTrained,
+	})
+
+	return gameStateSelectLoadout, nil
 }

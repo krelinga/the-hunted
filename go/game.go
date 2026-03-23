@@ -93,6 +93,8 @@ func (g *Game) Advance(form Form) error {
 	}
 }
 
+var errNoChange = errors.New("no change in game state")
+
 func (g *Game) Next() error {
 	if g.Done() {
 		panic("game is already done")
@@ -103,7 +105,9 @@ func (g *Game) Next() error {
 	}
 	ew := applyEventToGame{G: g}
 	newState, err := allHandlers[g.nextState](g.GetView(), g.Selector, roller, ew)
-	if err != nil {
+	if err == errNoChange {
+		return nil
+	} else if err != nil {
 		return err
 	}
 	g.nextState = newState
