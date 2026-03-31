@@ -226,14 +226,14 @@ type TorpCountsView interface {
 	Total() int
 }
 
-type torpCountsViewFwds interface {
+type torpCountsFwds interface {
 	String() string
 	Total() int
 }
 
 type torpCountsViewImpl struct {
 	views3.Map[TorpType, int]
-	torpCountsViewFwds
+	torpCountsFwds
 }
 
 type TorpCountsData map[TorpType]int
@@ -249,7 +249,7 @@ func (d TorpCountsData) Total() int {
 func (d TorpCountsData) View() TorpCountsView {
 	return torpCountsViewImpl{
 		Map: views3.NewMap(d),
-		torpCountsViewFwds: d,
+		torpCountsFwds: d,
 	}
 }
 
@@ -269,13 +269,13 @@ type TorpLayoutView interface {
 	Total() int
 }
 
-type torpLayoutViewFwds interface {
+type torpLayoutFwds interface {
 	Total() int
 }
 
 type torpLayoutViewImpl struct {
 	views3.Map[TorpLoc, TorpCountsView]
-	torpLayoutViewFwds
+	torpLayoutFwds
 }
 
 type TorpLayoutData map[TorpLoc]TorpCountsData
@@ -291,7 +291,7 @@ func (d TorpLayoutData) Total() int {
 func (d TorpLayoutData) View() TorpLayoutView {
 	return torpLayoutViewImpl{
 		Map:  views3.NewViewerMap(d),
-		torpLayoutViewFwds: d,
+		torpLayoutFwds: d,
 	}
 }
 
