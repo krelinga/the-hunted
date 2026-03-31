@@ -35,16 +35,16 @@ func (d DiceD6) AsInt() int {
 	return int(d)
 }
 
-type Result2D6 struct {
+type Dice2D6 struct {
 	Dice1 DiceD6
 	Dice2 DiceD6
 }
 
-func (r Result2D6) String() string {
+func (r Dice2D6) String() string {
 	return fmt.Sprintf("%s + %s = %d", r.Dice1, r.Dice2, r.AsInt())
 }
 
-func (r Result2D6) Validate() error {
+func (r Dice2D6) Validate() error {
 	if err := r.Dice1.Validate(); err != nil {
 		return fmt.Errorf("invalid first die: %w", err)
 	}
@@ -54,20 +54,20 @@ func (r Result2D6) Validate() error {
 	return nil
 }
 
-func (r Result2D6) Must() {
+func (r Dice2D6) Must() {
 	if err := r.Validate(); err != nil {
 		panic(err)
 	}
 }
 
-func (r Result2D6) AsInt() int {
+func (r Dice2D6) AsInt() int {
 	r.Must()
 	return r.Dice1.AsInt() + r.Dice2.AsInt()
 }
 
 type Roller interface {
 	RollD6() DiceD6
-	Roll2D6() Result2D6
+	Roll2D6() Dice2D6
 }
 
 type RandomRoller struct{}
@@ -76,8 +76,8 @@ func (r RandomRoller) RollD6() DiceD6 {
 	return DiceD6(rand.Intn(6) + 1)
 }
 
-func (r RandomRoller) Roll2D6() Result2D6 {
-	return Result2D6{
+func (r RandomRoller) Roll2D6() Dice2D6 {
+	return Dice2D6{
 		Dice1: r.RollD6(),
 		Dice2: r.RollD6(),
 	}

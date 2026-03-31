@@ -174,7 +174,7 @@ func (p PatrolSpot) IsAnyOf(spots ...PatrolSpot) bool {
 type PatrolAssignmentEvent struct {
 	baseEvent
 	PatrolAssignment PatrolAssignment
-	Result2D6        Result2D6
+	Result2D6        Dice2D6
 	UBoatType        UBoatType
 	PatrolDate       PatrolDate
 }
