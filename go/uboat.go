@@ -226,17 +226,8 @@ type TorpCountsView interface {
 	Total() int
 }
 
-type torpCountsFwds interface {
-	String() string
-	Total() int
-}
-
-type torpCountsViewImpl struct {
-	views3.Map[TorpType, int]
-	torpCountsFwds
-}
-
 type TorpCountsData map[TorpType]int
+//go:generate ./map_methods.sh TorpCountsData TorpType int
 
 func (d TorpCountsData) Total() int {
 	total := 0
@@ -247,10 +238,7 @@ func (d TorpCountsData) Total() int {
 }
 
 func (d TorpCountsData) View() TorpCountsView {
-	return torpCountsViewImpl{
-		Map: views3.NewMap(d),
-		torpCountsFwds: d,
-	}
+	return d
 }
 
 func (d TorpCountsData) String() string {
@@ -269,30 +257,15 @@ type TorpLayoutView interface {
 	Total() int
 }
 
-type torpLayoutFwds interface {
-	Total() int
-}
+type TorpLayout map[TorpLoc]TorpCountsData
+//go:generate ./map_viewer_methods.sh TorpLayout TorpLoc TorpCountsView
 
-type torpLayoutViewImpl struct {
-	views3.Map[TorpLoc, TorpCountsView]
-	torpLayoutFwds
-}
-
-type TorpLayoutData map[TorpLoc]TorpCountsData
-
-func (d TorpLayoutData) Total() int {
+func (d TorpLayout) Total() int {
 	total := 0
 	for _, counts := range d {
 		total += counts.Total()
 	}
 	return total
-}
-
-func (d TorpLayoutData) View() TorpLayoutView {
-	return torpLayoutViewImpl{
-		Map:  views3.NewViewerMap(d),
-		torpLayoutFwds: d,
-	}
 }
 
 func (u UBoatType) DefaultLoadout(pd PatrolDate) TorpCountsData {
@@ -428,7 +401,7 @@ type UBoatView interface {
 type UBoatData struct {
 	UBoatType   UBoatType
 	ID          string
-	TorpLayout  TorpLayoutData
+	TorpLayout  TorpLayout
 	HasDeckGun  bool
 	DeckGunAmmo int
 }
@@ -465,7 +438,7 @@ func NewUBoatData(uBoatType UBoatType, id string) *UBoatData {
 	ub := &UBoatData{
 		UBoatType:   uBoatType,
 		ID:          id,
-		TorpLayout:  make(TorpLayoutData),
+		TorpLayout:  make(TorpLayout),
 		HasDeckGun:  uBoatType.HasDeckGun(),
 		DeckGunAmmo: uBoatType.DeckGunAmmo(),
 	}
