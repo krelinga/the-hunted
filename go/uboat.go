@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/krelinga/the-hunted/go/views"
+	"github.com/krelinga/the-hunted/go/views3"
 )
 
 type UBoatType int
@@ -46,8 +46,8 @@ var allUBoatTypes = []UBoatType{
 	UBoatTypeXXI,
 }
 
-func AllUBoatTypes() views.Slice[UBoatType] {
-	return views.WrapSlice(allUBoatTypes)
+func AllUBoatTypes() views3.Slice[UBoatType] {
+	return views3.NewSlice(allUBoatTypes)
 }
 
 var ErrInvalidUBoatType = errors.New("invalid u-boat type")
@@ -221,9 +221,19 @@ func (u UBoatType) HasTorpLoc(loc TorpLoc) bool {
 }
 
 type TorpCountsView interface {
-	views.Map[TorpType, int]
+	views3.Map[TorpType, int]
 	String() string
 	Total() int
+}
+
+type torpCountsViewFwds interface {
+	String() string
+	Total() int
+}
+
+type torpCountsViewImpl struct {
+	views3.Map[TorpType, int]
+	torpCountsViewFwds
 }
 
 type TorpCountsData map[TorpType]int
@@ -238,8 +248,8 @@ func (d TorpCountsData) Total() int {
 
 func (d TorpCountsData) View() TorpCountsView {
 	return torpCountsViewImpl{
-		Map:  views.WrapMap(d),
-		data: d,
+		Map: views3.NewMap(d),
+		torpCountsViewFwds: d,
 	}
 }
 
@@ -254,22 +264,18 @@ func (d TorpCountsData) String() string {
 	return fmt.Sprintf("[%s]", strings.Join(parts, ", "))
 }
 
-type torpCountsViewImpl struct {
-	views.Map[TorpType, int]
-	data TorpCountsData
-}
-
-func (v torpCountsViewImpl) Total() int {
-	return v.data.Total()
-}
-
-func (v torpCountsViewImpl) String() string {
-	return v.data.String()
-}
-
 type TorpLayoutView interface {
-	views.Map[TorpLoc, TorpCountsView]
+	views3.Map[TorpLoc, TorpCountsView]
 	Total() int
+}
+
+type torpLayoutViewFwds interface {
+	Total() int
+}
+
+type torpLayoutViewImpl struct {
+	views3.Map[TorpLoc, TorpCountsView]
+	torpLayoutViewFwds
 }
 
 type TorpLayoutData map[TorpLoc]TorpCountsData
@@ -284,18 +290,9 @@ func (d TorpLayoutData) Total() int {
 
 func (d TorpLayoutData) View() TorpLayoutView {
 	return torpLayoutViewImpl{
-		Map:  views.WrapViewerMap(d),
-		data: d,
+		Map:  views3.NewViewerMap(d),
+		torpLayoutViewFwds: d,
 	}
-}
-
-type torpLayoutViewImpl struct {
-	views.Map[TorpLoc, TorpCountsView]
-	data TorpLayoutData
-}
-
-func (v torpLayoutViewImpl) Total() int {
-	return v.data.Total()
 }
 
 func (u UBoatType) DefaultLoadout(pd PatrolDate) TorpCountsData {

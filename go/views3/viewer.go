@@ -10,12 +10,15 @@ type Slice[T any] interface {
 	Len() int
 	Get(i int) T
 	All() iter.Seq2[int, T]
+	Values() iter.Seq[T]
 }
 
 type Map[K comparable, V any] interface {
 	Len() int
 	Get(k K) (V, bool)
 	All() iter.Seq2[K, V]
+	Keys() iter.Seq[K]
+	Values() iter.Seq[V]
 }
 
 type Viewer[T any] interface {
@@ -41,6 +44,14 @@ func (v mapImpl[M, K, V]) Get(k K) (V, bool) {
 
 func (v mapImpl[M, K, V]) All() iter.Seq2[K, V] {
 	return maps.All(v.m)
+}
+
+func (v mapImpl[M, K, V]) Keys() iter.Seq[K] {
+	return maps.Keys(v.m)
+}
+
+func (v mapImpl[M, K, V]) Values() iter.Seq[V] {
+	return maps.Values(v.m)
 }
 
 func NewViewerMap[M ~map[K]V, K comparable, V Viewer[V2], V2 any](m M) Map[K, V2] {
@@ -74,6 +85,20 @@ func (v viewerMapImpl[M, K, V, V2]) All() iter.Seq2[K, V2] {
 	}
 }
 
+func (v viewerMapImpl[M, K, V, V2]) Keys() iter.Seq[K] {
+	return maps.Keys(v.m)
+}
+
+func (v viewerMapImpl[M, K, V, V2]) Values() iter.Seq[V2] {
+	return func(yield func(V2) bool) {
+		for _, v := range v.m {
+			if !yield(v.View()) {
+				return
+			}
+		 }
+	}
+}
+
 func NewSlice[S ~[]T, T any](s S) Slice[T] {
 	return sliceImpl[S, T]{s: s}
 }
@@ -92,6 +117,10 @@ func (v sliceImpl[S, T]) Get(i int) T {
 
 func (v sliceImpl[S, T]) All() iter.Seq2[int, T] {
 	return slices.All(v.s)
+}
+
+func (v sliceImpl[S, T]) Values() iter.Seq[T] {
+	return slices.Values(v.s)
 }
 
 func NewViewerSlice[S ~[]V, V Viewer[V2], V2 any](s S) Slice[V2] {
@@ -114,6 +143,16 @@ func (v viewerSliceImpl[S, V, V2]) All() iter.Seq2[int, V2] {
 	return func(yield func(int, V2) bool) {
 		for i, v := range v.s {
 			if !yield(i, v.View()) {
+				return
+			}
+		}
+	}
+}
+
+func (v viewerSliceImpl[S, V, V2]) Values() iter.Seq[V2] {
+	return func(yield func(V2) bool) {
+		for _, v := range v.s {
+			if !yield(v.View()) {
 				return
 			}
 		}

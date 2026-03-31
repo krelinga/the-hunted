@@ -180,7 +180,7 @@ type PatrolAssignmentEvent struct {
 }
 
 func (e PatrolAssignmentEvent) apply(gd *Data) {
-	gd.Patrols = append(gd.Patrols, &PatrolData{
+	gd.Patrols = append(gd.Patrols, &Patrol{
 		PatrolAssignment: e.PatrolAssignment,
 		PatrolDate:       e.PatrolDate,
 	})
@@ -265,23 +265,19 @@ type PatrolView interface {
 	GetPatrolDate() PatrolDate
 }
 
-type PatrolData struct {
+type Patrol struct {
 	PatrolAssignment PatrolAssignment
 	PatrolDate       PatrolDate
 }
 
-func (p *PatrolData) View() PatrolView {
-	return patrolViewImpl{data: p}
+func (p *Patrol) View() PatrolView {
+	return p
 }
 
-type patrolViewImpl struct {
-	data *PatrolData
+func (p *Patrol) GetPatrolAssignment() PatrolAssignment {
+	return p.PatrolAssignment
 }
 
-func (p patrolViewImpl) GetPatrolAssignment() PatrolAssignment {
-	return p.data.PatrolAssignment
-}
-
-func (p patrolViewImpl) GetPatrolDate() PatrolDate {
-	return p.data.PatrolDate
+func (p *Patrol) GetPatrolDate() PatrolDate {
+	return p.PatrolDate
 }

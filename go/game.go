@@ -3,7 +3,7 @@ package thehunted
 import (
 	"errors"
 
-	"github.com/krelinga/the-hunted/go/views"
+	"github.com/krelinga/the-hunted/go/views3"
 )
 
 type View interface {
@@ -11,7 +11,7 @@ type View interface {
 	GetKmdtRank() Rank
 	GetCrewQuality() CrewQuality
 	GetUBoat() UBoatView
-	GetPatrols() views.Slice[PatrolView]
+	GetPatrols() views3.Slice[PatrolView]
 	GetStartPatrolDate() PatrolDate
 }
 
@@ -20,41 +20,37 @@ type Data struct {
 	KmdtRank    Rank
 	CrewQuality CrewQuality
 	UBoat       *UBoatData
-	Patrols     []*PatrolData
+	Patrols     []*Patrol
 	// TODO: rename to NextPatrolDate.
 	StartPatrolDate PatrolDate
 }
 
 func (d *Data) View() View {
-	return viewImpl{data: d}
+	return d
 }
 
-type viewImpl struct {
-	data *Data
+func (v *Data) GetKmdtName() string {
+	return v.KmdtName
 }
 
-func (v viewImpl) GetKmdtName() string {
-	return v.data.KmdtName
+func (v *Data) GetKmdtRank() Rank {
+	return v.KmdtRank
 }
 
-func (v viewImpl) GetKmdtRank() Rank {
-	return v.data.KmdtRank
+func (v *Data) GetCrewQuality() CrewQuality {
+	return v.CrewQuality
 }
 
-func (v viewImpl) GetCrewQuality() CrewQuality {
-	return v.data.CrewQuality
+func (v *Data) GetUBoat() UBoatView {
+	return v.UBoat.View()
 }
 
-func (v viewImpl) GetUBoat() UBoatView {
-	return v.data.UBoat.View()
+func (v *Data) GetPatrols() views3.Slice[PatrolView] {
+	return views3.NewViewerSlice(v.Patrols)
 }
 
-func (v viewImpl) GetPatrols() views.Slice[PatrolView] {
-	return views.WrapViewerSlice(v.data.Patrols)
-}
-
-func (v viewImpl) GetStartPatrolDate() PatrolDate {
-	return v.data.StartPatrolDate
+func (v *Data) GetStartPatrolDate() PatrolDate {
+	return v.StartPatrolDate
 }
 
 type Game struct {
