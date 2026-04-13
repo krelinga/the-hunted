@@ -123,14 +123,14 @@ func (_ selector) SelectLoadout(g thehunted.View) *thehunted.SelectedLoadout {
 		log.Fatalf("error running form: %v", err)
 	}
 
-	layout := map[thehunted.TorpLoc]thehunted.TorpCountsData{}
+	layout := map[thehunted.TorpLoc]thehunted.TorpCounts{}
 	fwdReloads := uboatLoadouts[selectedLoadoutOptionIdx].Clone()
 	for i, loc := range tubeLocs {
-		layout[loc] = thehunted.TorpCountsData{selectedTorps[i]: 1}
+		layout[loc] = thehunted.TorpCounts{selectedTorps[i]: 1}
 		fwdReloads[selectedTorps[i]]--
 	}
 	if len(aftReloadSlots) > 0 {
-		layout[thehunted.NewTorpLocReload(thehunted.FacingAft)] = thehunted.TorpCountsData{}
+		layout[thehunted.NewTorpLocReload(thehunted.FacingAft)] = thehunted.TorpCounts{}
 	}
 	for _, torpType := range aftReloadSlots {
 		layout[thehunted.NewTorpLocReload(thehunted.FacingAft)][torpType]++

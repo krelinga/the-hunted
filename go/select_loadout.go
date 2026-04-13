@@ -8,7 +8,7 @@ import (
 )
 
 type SelectedLoadout struct {
-	Layout map[TorpLoc]TorpCountsData
+	Layout map[TorpLoc]TorpCounts
 }
 
 func (s *SelectedLoadout) Validate(g View) error {
@@ -44,7 +44,7 @@ func (s *SelectedLoadout) Validate(g View) error {
 
 type LoadoutChangedEvent struct {
 	baseEvent
-	TorpLoc TorpLoc
+	TorpLoc    TorpLoc
 	TorpCounts TorpCountsView
 }
 
@@ -107,7 +107,7 @@ func handleSelectLoadout(g View, s Selector, r Roller, ew EventWriter) (gameStat
 	})
 	for _, loc := range locs {
 		ew.WriteEvent(LoadoutChangedEvent{
-			TorpLoc: loc,
+			TorpLoc:    loc,
 			TorpCounts: selected.Layout[loc],
 		})
 	}

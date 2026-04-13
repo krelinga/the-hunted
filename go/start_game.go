@@ -41,7 +41,7 @@ type NewUBoatEvent struct {
 }
 
 func (e NewUBoatEvent) apply(gd *Data) {
-	gd.UBoat = NewUBoatData(e.UBoatType, e.UBoatID)
+	gd.UBoat = NewUBoat(e.UBoatType, e.UBoatID)
 }
 
 func (e NewUBoatEvent) String() string {

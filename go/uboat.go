@@ -244,36 +244,36 @@ type TorpCountsView interface {
 	Find(torpType TorpType) (int, bool)
 	All() iter.Seq2[TorpType, int]
 	Keys() iter.Seq[TorpType]
-	Clone() TorpCountsData
+	Clone() TorpCounts
 	Equal(TorpCountsView) bool
 	String() string
 	Total() int
 }
 
-type TorpCountsData map[TorpType]int
+type TorpCounts map[TorpType]int
 
-func (d TorpCountsData) Length() int {
+func (d TorpCounts) Length() int {
 	return len(d)
 }
 
-func (d TorpCountsData) Find(torpType TorpType) (int, bool) {
+func (d TorpCounts) Find(torpType TorpType) (int, bool) {
 	count, ok := d[torpType]
 	return count, ok
 }
 
-func (d TorpCountsData) All() iter.Seq2[TorpType, int] {
+func (d TorpCounts) All() iter.Seq2[TorpType, int] {
 	return maps.All(d)
 }
 
-func (d TorpCountsData) Keys() iter.Seq[TorpType] {
+func (d TorpCounts) Keys() iter.Seq[TorpType] {
 	return maps.Keys(d)
 }
 
-func (d TorpCountsData) Clone() TorpCountsData {
+func (d TorpCounts) Clone() TorpCounts {
 	return maps.Clone(d)
 }
 
-func (d TorpCountsData) Equal(other TorpCountsView) bool {
+func (d TorpCounts) Equal(other TorpCountsView) bool {
 	if other == nil {
 		return false
 	}
@@ -288,7 +288,7 @@ func (d TorpCountsData) Equal(other TorpCountsView) bool {
 	return true
 }
 
-func (d TorpCountsData) Total() int {
+func (d TorpCounts) Total() int {
 	total := 0
 	for _, count := range d {
 		total += count
@@ -296,7 +296,7 @@ func (d TorpCountsData) Total() int {
 	return total
 }
 
-func (d TorpCountsData) String() string {
+func (d TorpCounts) String() string {
 	kinds := []TorpType{TorpTypeG7e, TorpTypeG7a, TorpTypeG7esZaunkonig, TorpTypeG7esZaunkonigII, TorpTypeG7eFalke}
 	var parts []string
 	for _, kind := range kinds {
@@ -314,7 +314,7 @@ type TorpLayoutView interface {
 	Total() int
 }
 
-type TorpLayout map[TorpLoc]TorpCountsData
+type TorpLayout map[TorpLoc]TorpCounts
 
 func (d TorpLayout) Find(loc TorpLoc) (TorpCountsView, bool) {
 	counts, ok := d[loc]
@@ -365,35 +365,35 @@ func (u UBoatType) DefaultLoadout(pd PatrolDate) TorpCountsView {
 
 	switch u {
 	case UBoatTypeVIIB, UBoatTypeVIIC, UBoatTypeVIIC41, UBoatTypeVIID:
-		return TorpCountsData{
+		return TorpCounts{
 			TorpTypeG7e: 8,
 			TorpTypeG7a: 4,
 			special:     2,
 		}
 	case UBoatTypeVIICFlak:
-		return TorpCountsData{
+		return TorpCounts{
 			TorpTypeG7a: 3,
 			special:     2,
 		}
 	case UBoatTypeIXB, UBoatTypeIXC, UBoatTypeIXC40, UBoatTypeIXD42:
-		return TorpCountsData{
+		return TorpCounts{
 			TorpTypeG7e: 10,
 			TorpTypeG7a: 10,
 			special:     2,
 		}
 	case UBoatTypeIXD2:
-		return TorpCountsData{
+		return TorpCounts{
 			TorpTypeG7e: 10,
 			TorpTypeG7a: 10,
 			special:     4,
 		}
 	case UBoatTypeXB:
-		return TorpCountsData{
+		return TorpCounts{
 			TorpTypeG7e: 3,
 			special:     2,
 		}
 	case UBoatTypeXII:
-		return TorpCountsData{
+		return TorpCounts{
 			TorpTypeG7e: 8,
 			TorpTypeG7a: 8,
 			special:     4,
@@ -401,7 +401,7 @@ func (u UBoatType) DefaultLoadout(pd PatrolDate) TorpCountsView {
 	case UBoatTypeXIV:
 		return nil
 	case UBoatTypeXXI:
-		return TorpCountsData{
+		return TorpCounts{
 			TorpTypeG7e: 8,
 			TorpTypeG7a: 9,
 			special:     6,
@@ -479,7 +479,7 @@ type UBoatView interface {
 	GetDeckGunAmmo() int
 }
 
-type UBoatData struct {
+type UBoat struct {
 	UBoatType   UBoatType
 	ID          string
 	TorpLayout  TorpLayout
@@ -487,28 +487,28 @@ type UBoatData struct {
 	DeckGunAmmo int
 }
 
-func (d *UBoatData) GetUBoatType() UBoatType {
+func (d *UBoat) GetUBoatType() UBoatType {
 	return d.UBoatType
 }
 
-func (d *UBoatData) GetID() string {
+func (d *UBoat) GetID() string {
 	return d.ID
 }
 
-func (d *UBoatData) GetTorpLayout() TorpLayoutView {
+func (d *UBoat) GetTorpLayout() TorpLayoutView {
 	return d.TorpLayout
 }
 
-func (d *UBoatData) GetHasDeckGun() bool {
+func (d *UBoat) GetHasDeckGun() bool {
 	return d.HasDeckGun
 }
 
-func (d *UBoatData) GetDeckGunAmmo() int {
+func (d *UBoat) GetDeckGunAmmo() int {
 	return d.DeckGunAmmo
 }
 
-func NewUBoatData(uBoatType UBoatType, id string) *UBoatData {
-	ub := &UBoatData{
+func NewUBoat(uBoatType UBoatType, id string) *UBoat {
+	ub := &UBoat{
 		UBoatType:   uBoatType,
 		ID:          id,
 		TorpLayout:  make(TorpLayout),
@@ -516,16 +516,16 @@ func NewUBoatData(uBoatType UBoatType, id string) *UBoatData {
 		DeckGunAmmo: uBoatType.DeckGunAmmo(),
 	}
 	for i := 1; i <= uBoatType.FwdTubes(); i++ {
-		ub.TorpLayout[NewTorpLocTube(FacingFwd, i)] = TorpCountsData{}
+		ub.TorpLayout[NewTorpLocTube(FacingFwd, i)] = TorpCounts{}
 	}
 	for i := 1; i <= uBoatType.AftTubes(); i++ {
-		ub.TorpLayout[NewTorpLocTube(FacingAft, i)] = TorpCountsData{}
+		ub.TorpLayout[NewTorpLocTube(FacingAft, i)] = TorpCounts{}
 	}
 	if uBoatType.FwdReloads() > 0 {
-		ub.TorpLayout[NewTorpLocReload(FacingFwd)] = TorpCountsData{}
+		ub.TorpLayout[NewTorpLocReload(FacingFwd)] = TorpCounts{}
 	}
 	if uBoatType.AftReloads() > 0 {
-		ub.TorpLayout[NewTorpLocReload(FacingAft)] = TorpCountsData{}
+		ub.TorpLayout[NewTorpLocReload(FacingAft)] = TorpCounts{}
 	}
 	return ub
 }

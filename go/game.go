@@ -17,7 +17,7 @@ type Data struct {
 	KmdtName    string
 	KmdtRank    Rank
 	CrewQuality CrewQuality
-	UBoat       *UBoatData
+	UBoat       *UBoat
 	Patrols     Patrols
 	// TODO: rename to NextPatrolDate.
 	StartPatrolDate PatrolDate
