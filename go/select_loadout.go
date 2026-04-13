@@ -8,7 +8,7 @@ import (
 )
 
 type SelectedLoadout struct {
-	Layout map[TorpLoc]TorpCounts
+	Layout TorpLayout
 }
 
 func (s *SelectedLoadout) Validate(g View) error {
