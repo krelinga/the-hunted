@@ -180,7 +180,7 @@ type PatrolAssignmentEvent struct {
 	PatrolDate       PatrolDate
 }
 
-func (e PatrolAssignmentEvent) apply(gd *Data) {
+func (e PatrolAssignmentEvent) apply(gd *Game) {
 	gd.Patrols = append(gd.Patrols, &Patrol{
 		PatrolAssignment: e.PatrolAssignment,
 		PatrolDate:       e.PatrolDate,
@@ -207,7 +207,7 @@ type PatrolAssignment struct {
 	AbwehrAgent bool
 }
 
-func startPatrol(g View, r Roller, ew EventWriter) {
+func startPatrol(g GameView, r Roller, ew EventWriter) {
 	// TODO: handle minelaying missions.
 	var wolfpack, abwehrAgent bool
 	result := r.Roll2D6()

@@ -7,7 +7,7 @@ import (
 	thehunted "github.com/krelinga/the-hunted/go"
 )
 
-func (_ selector) SelectStart(g thehunted.View) *thehunted.SelectedStart {
+func (_ selector) SelectStart(g thehunted.GameView) *thehunted.SelectedStart {
 	uboatTypes := thehunted.AllUBoatTypes()
 	uboatOptions := []huh.Option[int]{}
 	for i, option := range uboatTypes.All() {
@@ -33,8 +33,8 @@ func (_ selector) SelectStart(g thehunted.View) *thehunted.SelectedStart {
 		log.Fatalf("error running form: %v", err)
 	}
 	return &thehunted.SelectedStart{
-		KmdtName: kmdtName,
-		UBoatID:  uBoatID,
+		KmdtName:  kmdtName,
+		UBoatID:   uBoatID,
 		UBoatType: uboatTypes.Get(uboatTypeIndex),
 	}
 }

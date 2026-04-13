@@ -1,6 +1,6 @@
 package thehunted
 
 type Selector interface {
-	SelectStart(g View) *SelectedStart
-	SelectLoadout(g View) *SelectedLoadout
+	SelectStart(g GameView) *SelectedStart
+	SelectLoadout(g GameView) *SelectedLoadout
 }

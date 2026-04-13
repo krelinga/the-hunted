@@ -26,7 +26,7 @@ type KmdtNamedEvent struct {
 	KmdtName string
 }
 
-func (e KmdtNamedEvent) apply(gd *Data) {
+func (e KmdtNamedEvent) apply(gd *Game) {
 	gd.KmdtName = e.KmdtName
 }
 
@@ -40,7 +40,7 @@ type NewUBoatEvent struct {
 	UBoatID   string
 }
 
-func (e NewUBoatEvent) apply(gd *Data) {
+func (e NewUBoatEvent) apply(gd *Game) {
 	gd.UBoat = NewUBoat(e.UBoatType, e.UBoatID)
 }
 
@@ -54,7 +54,7 @@ type FirstPatrolDateSetEvent struct {
 	UBoatType       UBoatType
 }
 
-func (e FirstPatrolDateSetEvent) apply(gd *Data) {
+func (e FirstPatrolDateSetEvent) apply(gd *Game) {
 	gd.StartPatrolDate = e.FirstPatrolDate
 }
 
@@ -69,7 +69,7 @@ type StartingRankSetEvent struct {
 	PatrolDate PatrolDate
 }
 
-func (e StartingRankSetEvent) apply(gd *Data) {
+func (e StartingRankSetEvent) apply(gd *Game) {
 	gd.KmdtRank = e.Rank
 }
 
@@ -82,7 +82,7 @@ type CrewQualitySetEvent struct {
 	CrewQuality CrewQuality
 }
 
-func (e CrewQualitySetEvent) apply(gd *Data) {
+func (e CrewQualitySetEvent) apply(gd *Game) {
 	gd.CrewQuality = e.CrewQuality
 }
 
@@ -90,7 +90,7 @@ func (e CrewQualitySetEvent) String() string {
 	return fmt.Sprintf("Crew quality set: %s", e.CrewQuality)
 }
 
-func handleStart(g View, s Selector, r Roller, ew EventWriter) (gameState, error) {
+func handleStart(g GameView, s Selector, r Roller, ew EventWriter) (gameState, error) {
 	selected := s.SelectStart(g)
 	if selected == nil {
 		return 0, errNoChange

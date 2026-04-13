@@ -4,7 +4,7 @@ import (
 	"errors"
 )
 
-type View interface {
+type GameView interface {
 	GetKmdtName() string
 	GetKmdtRank() Rank
 	GetCrewQuality() CrewQuality
@@ -13,7 +13,7 @@ type View interface {
 	GetStartPatrolDate() PatrolDate
 }
 
-type Data struct {
+type Game struct {
 	KmdtName    string
 	KmdtRank    Rank
 	CrewQuality CrewQuality
@@ -23,42 +23,42 @@ type Data struct {
 	StartPatrolDate PatrolDate
 }
 
-func (v *Data) GetKmdtName() string {
+func (v *Game) GetKmdtName() string {
 	return v.KmdtName
 }
 
-func (v *Data) GetKmdtRank() Rank {
+func (v *Game) GetKmdtRank() Rank {
 	return v.KmdtRank
 }
 
-func (v *Data) GetCrewQuality() CrewQuality {
+func (v *Game) GetCrewQuality() CrewQuality {
 	return v.CrewQuality
 }
 
-func (v *Data) GetUBoat() UBoatView {
+func (v *Game) GetUBoat() UBoatView {
 	return v.UBoat
 }
 
-func (v *Data) GetPatrols() PatrolsView {
+func (v *Game) GetPatrols() PatrolsView {
 	return v.Patrols
 }
 
-func (v *Data) GetStartPatrolDate() PatrolDate {
+func (v *Game) GetStartPatrolDate() PatrolDate {
 	return v.StartPatrolDate
 }
 
-type Game struct {
+type Engine struct {
 	Selector    Selector
 	EventWriter EventWriter
 	Roller      Roller
 
-	data      Data
+	game      Game
 	nextState gameState
 }
 
 var errNoChange = errors.New("no change in game state")
 
-func (g *Game) Next() error {
+func (g *Engine) Next() error {
 	if g.Done() {
 		panic("game is already done")
 	}
@@ -67,7 +67,7 @@ func (g *Game) Next() error {
 		roller = RandomRoller{}
 	}
 	ew := applyEventToGame{G: g}
-	newState, err := allHandlers[g.nextState](&g.data, g.Selector, roller, ew)
+	newState, err := allHandlers[g.nextState](&g.game, g.Selector, roller, ew)
 	if err == errNoChange {
 		return nil
 	} else if err != nil {
@@ -77,7 +77,7 @@ func (g *Game) Next() error {
 	return nil
 }
 
-func (g *Game) Done() bool {
+func (g *Engine) Done() bool {
 	return g.nextState == gameStateDone
 }
 
@@ -92,7 +92,7 @@ const (
 	gameStateDone
 )
 
-type handler func(g View, s Selector, r Roller, ew EventWriter) (gameState, error)
+type handler func(g GameView, s Selector, r Roller, ew EventWriter) (gameState, error)
 
 var allHandlers = map[gameState]handler{
 	gameStateStart:         handleStart,
@@ -100,11 +100,11 @@ var allHandlers = map[gameState]handler{
 }
 
 type applyEventToGame struct {
-	G *Game
+	G *Engine
 }
 
 func (e applyEventToGame) WriteEvent(ev Event) {
-	ev.apply(&e.G.data)
+	ev.apply(&e.G.game)
 	if e.G.EventWriter != nil {
 		e.G.EventWriter.WriteEvent(ev)
 	}

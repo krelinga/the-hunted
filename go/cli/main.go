@@ -14,13 +14,13 @@ func (_ EventWriterPrinter) WriteEvent(event thehunted.Event) {
 }
 
 func main() {
-	g := thehunted.Game{
+	e := thehunted.Engine{
 		EventWriter: EventWriterPrinter{},
 		Roller:      thehunted.RandomRoller{},
 		Selector:    selector{},
 	}
-	for !g.Done() {
-		if err := g.Next(); err != nil {
+	for !e.Done() {
+		if err := e.Next(); err != nil {
 			log.Fatalf("error running game: %v", err)
 		}
 	}

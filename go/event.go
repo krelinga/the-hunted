@@ -3,7 +3,7 @@ package thehunted
 type Event interface {
 	eventIsAClosedType()
 
-	apply(*Data)
+	apply(*Game)
 
 	String() string
 }

@@ -9,7 +9,7 @@ import (
 	thehunted "github.com/krelinga/the-hunted/go"
 )
 
-func (_ selector) SelectLoadout(g thehunted.View) *thehunted.SelectedLoadout {
+func (_ selector) SelectLoadout(g thehunted.GameView) *thehunted.SelectedLoadout {
 	defaultLoadout := g.GetUBoat().GetUBoatType().DefaultLoadout(g.GetStartPatrolDate())
 	uboatLoadouts := thehunted.PermuteLoadouts(defaultLoadout)
 	loadoutOptions := []huh.Option[int]{}

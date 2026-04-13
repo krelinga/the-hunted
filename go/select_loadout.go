@@ -11,7 +11,7 @@ type SelectedLoadout struct {
 	Layout TorpLayout
 }
 
-func (s *SelectedLoadout) Validate(g View) error {
+func (s *SelectedLoadout) Validate(g GameView) error {
 	for torpLoc, torpCounts := range s.Layout {
 		if !g.GetUBoat().GetUBoatType().HasTorpLoc(torpLoc) {
 			return fmt.Errorf("%w: invalid torpedo location %s", ErrInvalidSelection, torpLoc)
@@ -48,7 +48,7 @@ type LoadoutChangedEvent struct {
 	TorpCounts TorpCountsView
 }
 
-func (e LoadoutChangedEvent) apply(gd *Data) {
+func (e LoadoutChangedEvent) apply(gd *Game) {
 	for k, v := range e.TorpCounts.All() {
 		gd.UBoat.TorpLayout[e.TorpLoc][k] = v
 	}
@@ -75,7 +75,7 @@ func (e LoadoutChangedEvent) String() string {
 	return fmt.Sprintf("Changed loadout for %s: %s", e.TorpLoc, strings.Join(deltas, ", "))
 }
 
-func handleSelectLoadout(g View, s Selector, r Roller, ew EventWriter) (gameState, error) {
+func handleSelectLoadout(g GameView, s Selector, r Roller, ew EventWriter) (gameState, error) {
 	selected := s.SelectLoadout(g)
 	if selected == nil {
 		return 0, errNoChange
