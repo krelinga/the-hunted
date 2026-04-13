@@ -7,16 +7,15 @@ import (
 
 	"charm.land/huh/v2"
 	thehunted "github.com/krelinga/the-hunted/go"
-	"github.com/krelinga/the-hunted/go/views"
 )
 
 func (_ selector) SelectLoadout(g thehunted.View) *thehunted.SelectedLoadout {
-	defaultLoadout := g.GetUBoat().GetUBoatType().DefaultLoadout(g.GetStartPatrolDate()).View()
+	defaultLoadout := g.GetUBoat().GetUBoatType().DefaultLoadout(g.GetStartPatrolDate())
 	uboatLoadouts := thehunted.PermuteLoadouts(defaultLoadout)
 	loadoutOptions := []huh.Option[int]{}
 	var defaultIdx int
 	for i, loadout := range uboatLoadouts {
-		if views.MapEqual(defaultLoadout, loadout) {
+		if defaultLoadout.Equal(loadout) {
 			defaultIdx = i
 		}
 		loadoutOptions = append(loadoutOptions, huh.NewOption(loadout.String(), i))
@@ -55,7 +54,7 @@ func (_ selector) SelectLoadout(g thehunted.View) *thehunted.SelectedLoadout {
 		groups = append(groups, huh.NewGroup(
 			huh.NewSelect[thehunted.TorpType]().
 				OptionsFunc(func() []huh.Option[thehunted.TorpType] {
-					overall := views.MapClone(uboatLoadouts[selectedLoadoutOptionIdx])
+					overall := uboatLoadouts[selectedLoadoutOptionIdx].Clone()
 					for j := 0; j < len(selectedTorps) && j < i; j++ {
 						overall[selectedTorps[j]]--
 					}
@@ -78,7 +77,7 @@ func (_ selector) SelectLoadout(g thehunted.View) *thehunted.SelectedLoadout {
 	var aftReloadSlots []thehunted.TorpType
 	if capacity := g.GetUBoat().GetUBoatType().AftReloads(); capacity > 0 {
 		optFunc := func() []huh.Option[thehunted.TorpType] {
-			overall := views.MapClone(uboatLoadouts[selectedLoadoutOptionIdx])
+			overall := uboatLoadouts[selectedLoadoutOptionIdx].Clone()
 			for j := 0; j < len(selectedTorps); j++ {
 				overall[selectedTorps[j]]--
 			}
@@ -125,7 +124,7 @@ func (_ selector) SelectLoadout(g thehunted.View) *thehunted.SelectedLoadout {
 	}
 
 	layout := map[thehunted.TorpLoc]thehunted.TorpCountsData{}
-	fwdReloads := thehunted.TorpCountsData(views.MapClone(uboatLoadouts[selectedLoadoutOptionIdx]))
+	fwdReloads := uboatLoadouts[selectedLoadoutOptionIdx].Clone()
 	for i, loc := range tubeLocs {
 		layout[loc] = thehunted.TorpCountsData{selectedTorps[i]: 1}
 		fwdReloads[selectedTorps[i]]--

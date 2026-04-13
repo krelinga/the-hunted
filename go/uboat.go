@@ -4,10 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"iter"
+	"maps"
 	"slices"
 	"strings"
-
-	"github.com/krelinga/the-hunted/go/views3"
 )
 
 type UBoatType int
@@ -29,7 +28,27 @@ const (
 	UBoatTypeXXI
 )
 
-var allUBoatTypes = []UBoatType{
+type UBoatTypesView interface {
+	Length() int
+	Get(i int) UBoatType
+	All() iter.Seq2[int, UBoatType]
+}
+
+type UBoatTypes []UBoatType
+
+func (u UBoatTypes) Length() int {
+	return len(u)
+}
+
+func (u UBoatTypes) Get(i int) UBoatType {
+	return u[i]
+}
+
+func (u UBoatTypes) All() iter.Seq2[int, UBoatType] {
+	return slices.All(u)
+}
+
+var allUBoatTypes = UBoatTypes{
 	UBoatTypeVIIB,
 	UBoatTypeVIIC,
 	UBoatTypeVIICFlak,
@@ -46,8 +65,8 @@ var allUBoatTypes = []UBoatType{
 	UBoatTypeXXI,
 }
 
-func AllUBoatTypes() views3.Slice[UBoatType] {
-	return views3.NewSlice(allUBoatTypes)
+func AllUBoatTypes() UBoatTypesView {
+	return allUBoatTypes
 }
 
 var ErrInvalidUBoatType = errors.New("invalid u-boat type")
@@ -221,13 +240,53 @@ func (u UBoatType) HasTorpLoc(loc TorpLoc) bool {
 }
 
 type TorpCountsView interface {
-	views3.Map[TorpType, int]
+	Length() int
+	Find(torpType TorpType) (int, bool)
+	All() iter.Seq2[TorpType, int]
+	Keys() iter.Seq[TorpType]
+	Clone() TorpCountsData
+	Equal(TorpCountsView) bool
 	String() string
 	Total() int
 }
 
 type TorpCountsData map[TorpType]int
-//go:generate ./map_methods.sh TorpCountsData TorpType int
+
+func (d TorpCountsData) Length() int {
+	return len(d)
+}
+
+func (d TorpCountsData) Find(torpType TorpType) (int, bool) {
+	count, ok := d[torpType]
+	return count, ok
+}
+
+func (d TorpCountsData) All() iter.Seq2[TorpType, int] {
+	return maps.All(d)
+}
+
+func (d TorpCountsData) Keys() iter.Seq[TorpType] {
+	return maps.Keys(d)
+}
+
+func (d TorpCountsData) Clone() TorpCountsData {
+	return maps.Clone(d)
+}
+
+func (d TorpCountsData) Equal(other TorpCountsView) bool {
+	if other == nil {
+		return false
+	}
+	if d.Length() != other.Length() {
+		return false
+	}
+	for torpType, count := range d {
+		if otherCount, _ := other.Find(torpType); count != otherCount {
+			return false
+		}
+	}
+	return true
+}
 
 func (d TorpCountsData) Total() int {
 	total := 0
@@ -235,10 +294,6 @@ func (d TorpCountsData) Total() int {
 		total += count
 	}
 	return total
-}
-
-func (d TorpCountsData) View() TorpCountsView {
-	return d
 }
 
 func (d TorpCountsData) String() string {
@@ -253,12 +308,38 @@ func (d TorpCountsData) String() string {
 }
 
 type TorpLayoutView interface {
-	views3.Map[TorpLoc, TorpCountsView]
+	Find(loc TorpLoc) (TorpCountsView, bool)
+	All() iter.Seq2[TorpLoc, TorpCountsView]
+	Keys() iter.Seq[TorpLoc]
 	Total() int
 }
 
 type TorpLayout map[TorpLoc]TorpCountsData
-//go:generate ./map_viewer_methods.sh TorpLayout TorpLoc TorpCountsView
+
+func (d TorpLayout) Find(loc TorpLoc) (TorpCountsView, bool) {
+	counts, ok := d[loc]
+	return counts, ok
+}
+
+func (d TorpLayout) All() iter.Seq2[TorpLoc, TorpCountsView] {
+	return func(yield func(TorpLoc, TorpCountsView) bool) {
+		for loc, counts := range d {
+			if !yield(loc, counts) {
+				return
+			}
+		}
+	}
+}
+
+func (d TorpLayout) Keys() iter.Seq[TorpLoc] {
+	return func(yield func(TorpLoc) bool) {
+		for loc := range d {
+			if !yield(loc) {
+				return
+			}
+		}
+	}
+}
 
 func (d TorpLayout) Total() int {
 	total := 0
@@ -268,7 +349,7 @@ func (d TorpLayout) Total() int {
 	return total
 }
 
-func (u UBoatType) DefaultLoadout(pd PatrolDate) TorpCountsData {
+func (u UBoatType) DefaultLoadout(pd PatrolDate) TorpCountsView {
 	u.Must()
 	pd.Must()
 
@@ -406,32 +487,24 @@ type UBoatData struct {
 	DeckGunAmmo int
 }
 
-func (d *UBoatData) View() UBoatView {
-	return uBoatViewImpl{data: d}
+func (d *UBoatData) GetUBoatType() UBoatType {
+	return d.UBoatType
 }
 
-type uBoatViewImpl struct {
-	data *UBoatData
+func (d *UBoatData) GetID() string {
+	return d.ID
 }
 
-func (u uBoatViewImpl) GetUBoatType() UBoatType {
-	return u.data.UBoatType
+func (d *UBoatData) GetTorpLayout() TorpLayoutView {
+	return d.TorpLayout
 }
 
-func (u uBoatViewImpl) GetID() string {
-	return u.data.ID
+func (d *UBoatData) GetHasDeckGun() bool {
+	return d.HasDeckGun
 }
 
-func (u uBoatViewImpl) GetTorpLayout() TorpLayoutView {
-	return u.data.TorpLayout.View()
-}
-
-func (u uBoatViewImpl) GetHasDeckGun() bool {
-	return u.data.HasDeckGun
-}
-
-func (u uBoatViewImpl) GetDeckGunAmmo() int {
-	return u.data.DeckGunAmmo
+func (d *UBoatData) GetDeckGunAmmo() int {
+	return d.DeckGunAmmo
 }
 
 func NewUBoatData(uBoatType UBoatType, id string) *UBoatData {

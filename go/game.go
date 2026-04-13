@@ -2,8 +2,6 @@ package thehunted
 
 import (
 	"errors"
-
-	"github.com/krelinga/the-hunted/go/views3"
 )
 
 type View interface {
@@ -11,7 +9,7 @@ type View interface {
 	GetKmdtRank() Rank
 	GetCrewQuality() CrewQuality
 	GetUBoat() UBoatView
-	GetPatrols() views3.Slice[PatrolView]
+	GetPatrols() PatrolsView
 	GetStartPatrolDate() PatrolDate
 }
 
@@ -20,13 +18,9 @@ type Data struct {
 	KmdtRank    Rank
 	CrewQuality CrewQuality
 	UBoat       *UBoatData
-	Patrols     []*Patrol
+	Patrols     Patrols
 	// TODO: rename to NextPatrolDate.
 	StartPatrolDate PatrolDate
-}
-
-func (d *Data) View() View {
-	return d
 }
 
 func (v *Data) GetKmdtName() string {
@@ -42,11 +36,11 @@ func (v *Data) GetCrewQuality() CrewQuality {
 }
 
 func (v *Data) GetUBoat() UBoatView {
-	return v.UBoat.View()
+	return v.UBoat
 }
 
-func (v *Data) GetPatrols() views3.Slice[PatrolView] {
-	return views3.NewViewerSlice(v.Patrols)
+func (v *Data) GetPatrols() PatrolsView {
+	return v.Patrols
 }
 
 func (v *Data) GetStartPatrolDate() PatrolDate {
@@ -62,10 +56,6 @@ type Game struct {
 	nextState gameState
 }
 
-func (g *Game) GetView() View {
-	return g.data.View()
-}
-
 var errNoChange = errors.New("no change in game state")
 
 func (g *Game) Next() error {
@@ -77,7 +67,7 @@ func (g *Game) Next() error {
 		roller = RandomRoller{}
 	}
 	ew := applyEventToGame{G: g}
-	newState, err := allHandlers[g.nextState](g.GetView(), g.Selector, roller, ew)
+	newState, err := allHandlers[g.nextState](&g.data, g.Selector, roller, ew)
 	if err == errNoChange {
 		return nil
 	} else if err != nil {

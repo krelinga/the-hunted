@@ -3,6 +3,7 @@ package thehunted
 import (
 	"errors"
 	"fmt"
+	"iter"
 	"slices"
 	"strings"
 )
@@ -270,14 +271,47 @@ type Patrol struct {
 	PatrolDate       PatrolDate
 }
 
-func (p *Patrol) View() PatrolView {
-	return p
-}
-
 func (p *Patrol) GetPatrolAssignment() PatrolAssignment {
 	return p.PatrolAssignment
 }
 
 func (p *Patrol) GetPatrolDate() PatrolDate {
 	return p.PatrolDate
+}
+
+type PatrolsView interface {
+	Length() int
+	Get(i int) PatrolView
+	All() iter.Seq2[int, PatrolView]
+	Values() iter.Seq[PatrolView]
+}
+
+type Patrols []*Patrol
+
+func (p Patrols) Length() int {
+	return len(p)
+}
+
+func (p Patrols) Get(i int) PatrolView {
+	return p[i]
+}
+
+func (p Patrols) All() iter.Seq2[int, PatrolView] {
+	return func(yield func(int, PatrolView) bool) {
+		for i, patrol := range p {
+			if !yield(i, patrol) {
+				return
+			}
+		}
+	}
+}
+
+func (p Patrols) Values() iter.Seq[PatrolView] {
+	return func(yield func(PatrolView) bool) {
+		for _, patrol := range p {
+			if !yield(patrol) {
+				return
+			}
+		}
+	}
 }

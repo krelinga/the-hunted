@@ -5,8 +5,6 @@ import (
 	"maps"
 	"slices"
 	"strings"
-
-	"github.com/krelinga/the-hunted/go/views"
 )
 
 type SelectedLoadout struct {
@@ -61,7 +59,7 @@ func (e LoadoutChangedEvent) String() string {
 	slices.Sort(types)
 	deltas := []string{}
 	for _, torpType := range types {
-		delta, _ := e.TorpCounts.Get(torpType)
+		delta, _ := e.TorpCounts.Find(torpType)
 		if delta == 0 {
 			continue
 		}
@@ -110,7 +108,7 @@ func handleSelectLoadout(g View, s Selector, r Roller, ew EventWriter) (gameStat
 	for _, loc := range locs {
 		ew.WriteEvent(LoadoutChangedEvent{
 			TorpLoc: loc,
-			TorpCounts: selected.Layout[loc].View(),
+			TorpCounts: selected.Layout[loc],
 		})
 	}
 	startPatrol(g, r, ew)
@@ -122,17 +120,17 @@ func PermuteLoadouts(defLoadout TorpCountsView) []TorpCountsView {
 	var extraE, extraA []TorpCountsView
 
 	for i := 1; i <= 4; i++ {
-		if count, _ := defLoadout.Get(TorpTypeG7a); count-i >= 0 {
-			l := TorpCountsData(views.MapClone(defLoadout))
+		if count, _ := defLoadout.Find(TorpTypeG7a); count-i >= 0 {
+			l := defLoadout.Clone()
 			l[TorpTypeG7a] -= i
 			l[TorpTypeG7e] += i
-			extraE = append(extraE, l.View())
+			extraE = append(extraE, l)
 		}
-		if count, _ := defLoadout.Get(TorpTypeG7e); count-i >= 0 {
-			l := TorpCountsData(views.MapClone(defLoadout))
+		if count, _ := defLoadout.Find(TorpTypeG7e); count-i >= 0 {
+			l := defLoadout.Clone()
 			l[TorpTypeG7e] -= i
 			l[TorpTypeG7a] += i
-			extraA = append(extraA, l.View())
+			extraA = append(extraA, l)
 		}
 	}
 	slices.Reverse(extraE)
