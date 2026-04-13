@@ -45,7 +45,7 @@ func (t TorpType) String() string {
 
 type TorpLoc struct {
 	facing Facing
-	tube int
+	tube   int
 }
 
 func NewTorpLocTube(f Facing, tube int) TorpLoc {
@@ -54,14 +54,14 @@ func NewTorpLocTube(f Facing, tube int) TorpLoc {
 	}
 	return TorpLoc{
 		facing: f,
-		tube: tube,
+		tube:   tube,
 	}
 }
 
 func NewTorpLocReload(f Facing) TorpLoc {
 	return TorpLoc{
 		facing: f,
-		tube: 0,
+		tube:   0,
 	}
 }
 
@@ -76,7 +76,7 @@ func (l TorpLoc) IsTube() bool {
 	return l.tube != 0
 }
 
-func (l TorpLoc) Tube() (int, bool) {
+func (l TorpLoc) GetTube() (int, bool) {
 	return l.tube, l.IsTube()
 }
 
@@ -84,7 +84,7 @@ func (l TorpLoc) IsReload() bool {
 	return l.tube == 0
 }
 
-func (l TorpLoc) Facing() Facing {
+func (l TorpLoc) GetFacing() Facing {
 	return l.facing
 }
 

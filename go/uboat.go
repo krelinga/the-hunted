@@ -219,7 +219,7 @@ func (u UBoatType) HasDeckGun() bool {
 func (u UBoatType) HasTorpLoc(loc TorpLoc) bool {
 	u.Must()
 	if loc.IsTube() {
-		switch loc.Facing() {
+		switch loc.GetFacing() {
 		case FacingFwd:
 			return loc.tube <= u.FwdTubes()
 		case FacingAft:
@@ -228,7 +228,7 @@ func (u UBoatType) HasTorpLoc(loc TorpLoc) bool {
 			panic("invalid facing")
 		}
 	} else {
-		switch loc.Facing() {
+		switch loc.GetFacing() {
 		case FacingFwd:
 			return u.FwdReloads() > 0
 		case FacingAft:

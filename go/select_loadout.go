@@ -19,7 +19,7 @@ func (s *SelectedLoadout) Validate(g View) error {
 		if torpLoc.IsTube() && torpCounts.Total() > 1 {
 			return fmt.Errorf("%w: torpedo location %s is a tube and cannot have more than 1 torpedo", ErrInvalidSelection, torpLoc)
 		} else {
-			switch torpLoc.Facing() {
+			switch torpLoc.GetFacing() {
 			case FacingFwd:
 				if torpCounts.Total() > g.GetUBoat().GetUBoatType().FwdReloads() {
 					return fmt.Errorf("%w: total count %d for torpedo location %s exceeds forward reload capacity of %d", ErrInvalidSelection, torpCounts.Total(), torpLoc, g.GetUBoat().GetUBoatType().FwdReloads())
@@ -92,15 +92,15 @@ func handleSelectLoadout(g View, s Selector, r Roller, ew EventWriter) (gameStat
 			}
 			return 1
 		}
-		if a.Facing() != b.Facing() {
-			if a.Facing() == FacingFwd {
+		if a.GetFacing() != b.GetFacing() {
+			if a.GetFacing() == FacingFwd {
 				return -1
 			}
 			return 1
 		}
 		if a.IsTube() && b.IsTube() {
-			aTube, _ := a.Tube()
-			bTube, _ := b.Tube()
+			aTube, _ := a.GetTube()
+			bTube, _ := b.GetTube()
 			return aTube - bTube
 		}
 		return 0

@@ -28,14 +28,14 @@ func (_ selector) SelectLoadout(g thehunted.View) *thehunted.SelectedLoadout {
 		}
 	}
 	slices.SortFunc(tubeLocs, func(a, b thehunted.TorpLoc) int {
-		if a.Facing() != b.Facing() {
-			if a.Facing() == thehunted.FacingFwd {
+		if a.GetFacing() != b.GetFacing() {
+			if a.GetFacing() == thehunted.FacingFwd {
 				return -1
 			}
 			return 1
 		}
-		aTube, aIsTube := a.Tube()
-		bTube, bIsTube := b.Tube()
+		aTube, aIsTube := a.GetTube()
+		bTube, bIsTube := b.GetTube()
 		if !aIsTube || !bIsTube {
 			panic("invalid torpedo location: not a tube")
 		}
